@@ -1,14 +1,14 @@
 <div>
     <img src='https://github.com/mapbiomas-brazil/cerrado/blob/mapbiomas60/2-general-map/www/ipam_logo.jpg?raw=true' height='auto' width='160' align='right'>
-    <h1>Cerrado biome - Collection 9</h1>
+    <h1>Cerrado biome - MapBiomas 10m Collection 2 BETA</h1>
 </div>
 
 Developed by [Instituto de Pesquisa Ambiental da Amazônia - IPAM](https://ipam.org.br/)<br>
 
 ## About
-This folder contains the scripts to classify and filter the ***Cerrado*** Biome.
+This folder contains the scripts to classify and filter the ***Cerrado*** Biome with Sentinel images.
 
-For detailed information about the classification and methodology, please read the Cerrado biome Appendix of the [Algorithm Theoretical Basis Document (ATBD).](https://mapbiomas.org/download-dos-atbds)
+For detailed information about the classification and methodology, please read the Cerrado biome Appendix of the [Algorithm Theoretical Basis Document (ATBD).](https://brasil.mapbiomas.org/download-dos-atbds-com-metodo-detalhado/)
 
 ## How to use
 1. [Create an account](https://signup.earthengine.google.com/) in Google Earth Engine plataform.
@@ -20,9 +20,9 @@ For detailed information about the classification and methodology, please read t
 ## Workflow
 Folders are organized by key-steps and contains a set of codes following the Cerrado biome classification schema:
 
-1. [General map classification](https://github.com/mapbiomas/brazil-cerrado/tree/main/collection-landsat/1-general-map)
+1. [General map classification](https://github.com/mapbiomas/brazil-cerrado/tree/main/collection-sentinel/1-general-map)
 
-2. [Rocky Outcrop classification](https://github.com/mapbiomas/brazil-cerrado/tree/main/collection-landsat/2-rocky-outcrop)
+2. [Rocky Outcrop classification](https://github.com/mapbiomas/brazil-cerrado/tree/main/collection-sentinel/2-rocky-outcrop)
 
 
 ## Contact
