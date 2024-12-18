@@ -20,7 +20,7 @@ For detailed information about the classification and methodology, please read t
 ## Workflow
 Folders are organized by key-steps and contains a set of codes following the Cerrado biome classification schema:
 
-1. [Classification with Landsat images](https://github.com/mapbiomas-brazil/cerrado/tree/mapbiomas90/1-general-map)
+1. [Classification with Landsat images](https://github.com/mapbiomas/brazil-cerrado/tree/main/collection-landsat)
 
 2. [Classification with Sentinel images](https://github.com/mapbiomas-brazil/cerrado/tree/mapbiomas90/2-rocky-outcrop)
 
