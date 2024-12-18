@@ -1,8 +1,8 @@
-## 01_trainingMask.js
-Build the training mask based on stable pixels from MapBiomas Collection 8 (1985 to 2022), reference maps, and GEDI-based filtering 
+## 01_stablePixels.js
+Build the training mask based on stable pixels from MapBiomas Collection 9 (1985 to 2023), reference maps, and GEDI-based filtering 
 ```javascript
 // read training mask
-var trainingMask = ee.Image('users/dh-conciani/collection9/masks/cerrado_trainingMask_1985_2022_v4');
+var trainingMask = ee.Image('projects/mapbiomas-workspace/COLECAO_DEV/COLECAO9_DEV/CERRADO/SENTINEL_DEV/masks/cerrado_trainingMask_1985_2023_v3');
 var vis = {
     'min': 0,
     'max': 62,
@@ -11,7 +11,7 @@ var vis = {
 // plot 
 Map.addLayer(trainingMask, vis, 'trainingMask'); 
 ```
-[Link to script](https://code.earthengine.google.com/1946c6a6cc6c0f753ab189990b3ce2a6)
+[Link to script](https://code.earthengine.google.com/6c4ee38af68d47233eee8d8d82324ad9)
 
 ## 02_computeProportion.js
 Calculates the area of each land use and land cover class in each classification region. The main objective is to estimate the number of training samples required for each class, ensuring that the distribution of samples adequately reflects the diversity of the regions.
@@ -20,53 +20,55 @@ Calculates the area of each land use and land cover class in each classification
 Uses the stable pixels to sort 7,000 training samples for each classification region (38 regions). 
 ```javascript
 // read training samples
-var samplePoints = ee.FeatureCollection('users/dh-conciani/collection9/sample/points/samplePoints_v4');
+var samplePoints = ee.FeatureCollection('projects/mapbiomas-workspace/COLECAO_DEV/COLECAO9_DEV/CERRADO/SENTINEL_DEV/sample/points/samplePoints_v3');
 
 // plot
 Map.addLayer(samplePoints, {}, 'samplePoints');
 ```
-[Link to script](https://code.earthengine.google.com/b72984eb093a132408fa5ebc56c6dcaf)
+[Link to script](https://code.earthengine.google.com/398c928b89613ab0536486c6f2f035bf)
 
 ## 04_getSignatures.R
-Use the sample points generated in the previous step to extract the spectral signatures from the Landsat image mosaic for each year.
+Use the sample points generated in the previous step to extract the spectral signatures from the Sentinel image mosaic for each year (2016 to 2023).
 ```javascript
 // inspect a sample of the training dataset 
-var trainingPoints = ee.FeatureCollection('projects/mapbiomas-workspace/COLECAO_DEV/COLECAO9_DEV/CERRADO/training/v8/train_col9_reg10_1985_v8');
+var trainingPoints = ee.FeatureCollection('projects/mapbiomas-workspace/COLECAO_DEV/COLECAO9_DEV/CERRADO/SENTINEL_DEV/training/v5/train_col9_reg10_2016_v5');
 
 // plot
 Map.addLayer(trainingPoints, {}, 'trainingSamples');
 ```
-[Link to script](https://code.earthengine.google.com/9a2b7176c9a33d22890d72e7e7ca9b13)
+[Link to script](https://code.earthengine.google.com/b18f2e7c6370f26357915c8743721c15)
 
-## 05_rfClassification.R
-Perfoms the model using the Random Forest classifier (ee.Classifier.smileRandomForest()) and subsequently classifies the annual Landsat mosaics for each region of interest.
+## 06_rfClassification.R
+Perfoms the model using the Random Forest classifier (ee.Classifier.smileRandomForest()) and subsequently classifies the annual Sentinel mosaics for each region of interest.
 
-## 06_gapFill.js
+## 07_gapfill.js
 No-data values (gaps) due to cloud and/or cloud shadow contaminated pixels in a given image were filled by the temporally nearest future valid classification. If no future valid classification was available, then the no-data value was replaced by its previous valid classification. Therefore, gaps should only remain in the final classified map when a given pixel was consistently classified as no-data throughout the entire temporal series. 
 
-## 07_incidence.js
-An incident filter was applied to remove pixels that changed too many times over the 39 years. All pixels that changed more than 13 times (1/3 of the time series), and were connected to less than seven same-class pixels that also changed more than 10 times, were replaced by the pixel MODE value. This avoids spurious transitions at the border of the same-class pixel group. Note that this filter was not applied to the Forest (3) and Rocky Outcrop (29) classes.  
+## 08_getSegments.js
+Uses the SNIC (Simple Non-Iterative Clustering) algorithm to create segments from Sentinel annual mosaic images using SWIR1, NIR, and Red bands. It is a superpixel clustering based on neighboring pixels. The segmentation process combines spectral, spatial, textural, and contextual information to refine land use and land cover classification. 
 
-## 08_temporal.js
+## 09_segmentation.js
+Applies the segments created in the previous step. Each segment was assigned the most common land cover class within it (mode filter) to align classification with segment boundaries, thereby reducing noise and improving overall classification consistency. 
+
+## 10_frequency.js
+The frequency filter was applied exclusively to pixels classified as native vegetation for a minimum of 85% of the time series. In the event that a pixel was classified as Forest Formation for a period exceeding 75% of the time, that class was assigned to the pixel for the entirety of the period. The same rule was applied to Wetlands (85%), Savanna Formation (40%) and Grassland Formation (50%). This frequency filter resulted in a more stable classification of native vegetation classes. Another noteworthy outcome was the removal of noise in the ﬁrst and last years of classification, which the temporal filter may not have adequately assessed.
+
+## 11_temporal.js
 This filter uses subsequent years to replace pixels that show invalid transitions in a given year, following the sequential steps detailed below:
-1. The filter evaluates all the pixels in a 5-year moving window (from 1986 to 2020) and a 4-year moving window (from 1986 to 2021). The objective is to correct pixel values that present a specific class in the previous year (year -1), change in the current year and return to the initial class in the last year of the window (year +2 or year +3). It is applied to each land use and cover class in the following order: Savanna Formation (4), Forest Formation (3), Grassland Formation (12), Wetland (11), Mosaic of Uses (21), River, Lake and Ocean (33), and Other Non-Vegetated Areas (25).
-2. This step is analogous to the initial step, employing a moving window of three years (1986-2022). The objective is to rectify the values of the intermediate years (-1 and +1) to address any inappropriate changes in the current year. The correction is executed in the same order of classes as in the initial step, ensuring temporal consistency over time.
-3. The filter identifies any class of native vegetation (forest, savanna, wetland, or grassland) that was not classified as such in 1985 but was correctly classified in 1986 and 1987. The year 1985 is then corrected to reflect the correct classification, ensuring the continuity of native vegetation over the years.
-4. The filter searches for pixel values that were not classified as Mosaic of Uses (21) in 2023, but were classified as such in 2022 and 2021. The 2023 class is corrected to match the previous year, avoiding any regeneration that cannot be confirmed in the last year.
-5. The filter allows for regeneration of native vegetation in the last year in areas of at least 1 hectare. Pixels indicating regeneration between 2022 and 2023 are evaluated, and areas smaller than 1 hectare are discarded to ensure classification consistency. 
+1. The first step consists of a 3-year moving window from 2017 to 2022 (excluding first and last years) that corrects for all intermediate years, considering previous and subsequent years (-1 and +1 years). Each transition is evaluated according to an order of priority, being: Savanna Formation (4), Grassland Formation (12), Forest Formation (3), Wetland (11), Mosaic of Uses (21), Other Non-vegetated Areas (25) and River, Lake, and Ocean (33).
+2. The second step involves checking the values of pixels that were not classified as Mosaic of Uses (21) in 2023 (last year) but were classified as such in 2022 and 2021. The value in 2023 is corrected to be consistent with previous years to avoid uncorrected regeneration in the recent year.
+3. Finally, the filter verifies the regeneration of native vegetation (NV) in the last year. Pixels indicating regeneration between 2022 and 2023 are evaluated, and areas smaller than 1 ha are discarded to ensure classification consistency. 
 
-## 09_frequency.js
-The frequency filter was applied exclusively to pixels classified as native vegetation for a minimum of 90% of the time series. In the event that a pixel was classified as Forest Formation for a period exceeding 75% of the time, that class was assigned to the pixel for the entirety of the period. The same rule was applied to Wetlands (60%), Savanna Formation (50%) and Grassland Formation (50%). This frequency filter resulted in a more stable classification of native vegetation classes. Another noteworthy outcome was the removal of noise in the ﬁrst and last years of classification, which the temporal filter may not have adequately assessed.
+## 12_noFalseRegrowth.js
+This filter avoids the incorrect classification of native forest regeneration in forest plantation areas in recent years. Pixels that were initially classified as “Mosaic of Uses” (21) in 2016-2017 but were subsequently classified as Forest Formation in the following years were adjusted to retain the anthropogenic designation.
 
-## 10_noFalseRegrowth.js
-This filter avoids the incorrect classification of native forest regeneration in forestry areas and the false regeneration of wetlands in recent years. The process follows specific steps: 
-1. The filter is initially applied to areas that have been mapped as "Mosaic of Uses" for a minimum of 15 consecutive years. These areas are identified and monitored in order to prevent new silvicultures from being misclassified as forest regeneration. The filter considers the minimum time needed for a new silviculture to achieve spectral characteristics similar to a native forest.
-2. The second stage of the filter is the classification of wetlands. It employs the classification from the previous five years (2018-2023) to correct the classification from the previous year (year -1). This retrospective analysis helps to normalize the classifications over time, preventing the false regeneration of wetlands in the final years of the series. The normalization between years ensures that the temporal transitions are coherent.
+## 13_geomorphometric.js
+The geomorphometric filter was applied only to the Wetland class (11) to mitigate erroneous classifications in areas characterized by unsuitable terrain conditions. This filter removed Wetland pixels located in regions with slopes exceeding 10 degrees. Pixels within these conditions were remapped to the most frequent neighboring land cover class, considering a kernel of 24 pixels.
 
-## 11_spatial.js
+## 14_spatial.js
 The spatial filter avoids misclassifications at the edge of pixel groups and was built based on the "connectedPixelCount" function. Native to the GEE platform, this function locates connected components (neighbors) that share the same pixel value. Thus, only pixels that do not share connections to a predefined number of identical neighbors are considered isolated. At least six connected pixels are required to reach the minimum connection value. Consequently, the minimum mapping unit is directly affected by the spatial filter applied, and it was defined as six pixels (0.54 hectares).
 
 ## Classification and methodology
-For detailed information about the classification and methodology, please read the Cerrado biome Appendix of the [Algorithm Theoretical Basis Document (ATBD).](https://mapbiomas.org/download-dos-atbds)
+For detailed information about the classification and methodology, please read the Cerrado biome (MapBiomas 10m Collection 2 BETA) Appendix of the [Algorithm Theoretical Basis Document (ATBD).](https://mapbiomas.org/download-dos-atbds)
 
 
