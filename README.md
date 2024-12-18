@@ -18,7 +18,7 @@ For detailed information about the classification and methodology, please read t
 3. Download or clone this repository to your local workspace.
 
 ## Workflow
-Folders are organized by key-steps and contains a set of codes following the Cerrado biome classification schema:
+Folders are organized by collections and contains a set of codes following the Cerrado biome classification schema:
 
 1. [Classification with Landsat images](https://github.com/mapbiomas/brazil-cerrado/tree/main/collection-landsat)
 
