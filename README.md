@@ -1,12 +1,12 @@
 <div>
     <img src='https://github.com/mapbiomas-brazil/cerrado/blob/mapbiomas60/2-general-map/www/ipam_logo.jpg?raw=true' height='auto' width='160' align='right'>
-    <h1>Cerrado biome - Collection 9</h1>
+    <h1>Cerrado biome - Land Use Land Cover (LULC) Classification </h1>
 </div>
 
 Developed by [Instituto de Pesquisa Ambiental da Amazônia - IPAM](https://ipam.org.br/)<br>
 
 ## About
-This folder contains the scripts to classify and filter the ***Cerrado*** Biome.
+This folder contains the scripts to classify and filter the ***Cerrado*** Biome with Landsat and Sentinel images collections.
 
 For detailed information about the classification and methodology, please read the Cerrado biome Appendix of the [Algorithm Theoretical Basis Document (ATBD).](https://mapbiomas.org/download-dos-atbds)
 
@@ -20,9 +20,9 @@ For detailed information about the classification and methodology, please read t
 ## Workflow
 Folders are organized by key-steps and contains a set of codes following the Cerrado biome classification schema:
 
-1. [General map classification](https://github.com/mapbiomas-brazil/cerrado/tree/mapbiomas90/1-general-map)
+1. [Classification with Landsat images](https://github.com/mapbiomas-brazil/cerrado/tree/mapbiomas90/1-general-map)
 
-2. [Rocky Outcrop classification](https://github.com/mapbiomas-brazil/cerrado/tree/mapbiomas90/2-rocky-outcrop)
+2. [Classification with Sentinel images](https://github.com/mapbiomas-brazil/cerrado/tree/mapbiomas90/2-rocky-outcrop)
 
 
 ## Contact
