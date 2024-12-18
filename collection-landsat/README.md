@@ -6,9 +6,9 @@
 Developed by [Instituto de Pesquisa Ambiental da Amazônia - IPAM](https://ipam.org.br/)<br>
 
 ## About
-This folder contains the scripts to classify and filter the ***Cerrado*** Biome.
+This folder contains the scripts to classify and filter the ***Cerrado*** Biome with Landsat images.
 
-For detailed information about the classification and methodology, please read the Cerrado biome Appendix of the [Algorithm Theoretical Basis Document (ATBD).](https://mapbiomas.org/download-dos-atbds)
+For detailed information about the classification and methodology, please read the Cerrado biome Appendix of the [Algorithm Theoretical Basis Document (ATBD).](https://brasil.mapbiomas.org/download-dos-atbds-com-metodo-detalhado/)
 
 ## How to use
 1. [Create an account](https://signup.earthengine.google.com/) in Google Earth Engine plataform.
