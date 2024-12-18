@@ -22,7 +22,7 @@ Folders are organized by collections and contains a set of codes following the C
 
 1. [Classification with Landsat images](https://github.com/mapbiomas/brazil-cerrado/tree/main/collection-landsat)
 
-2. [Classification with Sentinel images](https://github.com/mapbiomas-brazil/cerrado/tree/mapbiomas90/2-rocky-outcrop)
+2. [Classification with Sentinel images](https://github.com/mapbiomas/brazil-cerrado/tree/main/collection-sentinel)
 
 
 ## Contact
