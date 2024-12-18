@@ -46,6 +46,7 @@ Perfoms the model using the Random Forest classifier (ee.Classifier.smileRandomF
 No-data values (gaps) due to cloud and/or cloud shadow contaminated pixels in a given image were filled by the temporally nearest future valid classification. If no future valid classification was available, then the no-data value was replaced by its previous valid classification. Therefore, gaps should only remain in the final classified map when a given pixel was consistently classified as no-data throughout the entire temporal series. 
 
 ## 07_segmentation.js
+Applies the segments created in the previous step. Each segment was assigned the most common land cover class within it (mode filter) to align classification with segment boundaries, thereby reducing noise and improving overall classification consistency.
 
 ## 08_frequency.js
 The frequency filter was applied exclusively to pixels classified as rocky outcrop for a minimum of 50% of the time series. This frequency filter resulted in a more stable classification of rocky outcrop class.
