@@ -1,6 +1,6 @@
 <div>
     <img src='https://github.com/mapbiomas-brazil/cerrado/blob/mapbiomas60/2-general-map/www/ipam_logo.jpg?raw=true' height='auto' width='160' align='right'>
-    <h1>Cerrado biome - Collection 9</h1>
+    <h1>Cerrado biome - Collection 9,0</h1>
 </div>
 
 Developed by [Instituto de Pesquisa Ambiental da Amazônia - IPAM](https://ipam.org.br/)<br>
@@ -20,10 +20,11 @@ For detailed information about the classification and methodology, please read t
 ## Workflow
 Folders are organized by key-steps and contains a set of codes following the Cerrado biome classification schema:
 
-1. [General map classification](https://github.com/mapbiomas-brazil/cerrado/tree/mapbiomas90/1-general-map)
+1. [General map classification](https://github.com/mapbiomas/brazil-cerrado/tree/main/lulc_30m_landsat/collection_09/1-general-map)
 
-2. [Rocky Outcrop classification](https://github.com/mapbiomas-brazil/cerrado/tree/mapbiomas90/2-rocky-outcrop)
+2. [Rocky Outcrop classification](https://github.com/mapbiomas/brazil-cerrado/tree/main/lulc_30m_landsat/collection_09/2-rocky-outcrop)
 
+3. [Integration](https://github.com/mapbiomas/brazil-cerrado/tree/main/lulc_30m_landsat/collection_09/3-integration)
 
 ## Contact
 For clarification or issue/bug report, please write to <barbara.silva@ipam.org.br and dhemerson.costa@ipam.org.br>
