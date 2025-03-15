@@ -28,11 +28,16 @@ For detailed information about the classification and methodology, please read t
 
 ## Post-processing
 ✔ Step06: Merge classification results and apply a Gap Fill filter.
+
 ✔ Step07a: Create an asset tracking changes in classification.
+
 ✔ Step07b: Apply incident filter.
-✔ Step08: Apply temporal filter
-✔ Step09: Apply spatial filter
-✔ Step10: Apply frequency filter
+
+✔ Step08: Apply temporal filter.
+
+✔ Step09: Apply spatial filter.
+
+✔ Step10: Apply frequency filter.
 
 ## Contact
 For clarification or issue/bug report, please write to <felipe.lenti@ipam.org.br>
