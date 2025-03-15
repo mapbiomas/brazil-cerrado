@@ -1,6 +1,6 @@
 <div>
     <img src='https://github.com/mapbiomas-brazil/cerrado/blob/mapbiomas60/2-general-map/www/ipam_logo.jpg?raw=true' height='auto' width='160' align='right'>
-    <h1>Cerrado biome - Collection 9</h1>
+    <h1>Cerrado biome - Collection 5</h1>
 </div>
 
 Developed by [Instituto de Pesquisa Ambiental da Amazônia - IPAM](https://ipam.org.br/)<br>
@@ -16,8 +16,11 @@ For detailed information about the classification and methodology, please read t
    
 ## Pre-processing
 ✔ Step01: Build stable pixels from Collection 4.1 and save a new asset.
+
 ✔ Step02: Calculate area proportion for each class in each region to generate training samples.
+
 ✔ Step03: Export balanced training samples for each region.
+
 ✔ Step04: Export training samples for each year.
 
 ## Classification
