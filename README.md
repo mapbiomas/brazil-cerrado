@@ -20,9 +20,9 @@ For detailed information about the classification and methodology, please read t
 ## Workflow
 Folders are organized by collections and contains a set of codes following the Cerrado biome classification schema:
 
-1. [Classification with Landsat images](https://github.com/mapbiomas/brazil-cerrado/tree/main/collection-landsat)
+1. [LULC 30m Landsat](https://github.com/mapbiomas/brazil-cerrado/tree/main/lulc_30m_landsat): Land cover and land use data with a 30-meter spatial resolution, obtained from Landsat data
 
-2. [Classification with Sentinel images](https://github.com/mapbiomas/brazil-cerrado/tree/main/collection-sentinel)
+2. [LULC 10m Sentinel](https://github.com/mapbiomas/brazil-cerrado/tree/main/lulc_10m_sentinel): Land cover and land use data with a 10-meter spatial resolution, obtained from Sentinel data.
 
 
 ## Contact
