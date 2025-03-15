@@ -1,26 +1,35 @@
-<div class="fluid-row" id="header">
-    <h1 class="title toc-ignore">Cerrado</h1>
-    <h4 class="author"><em>Developed by  IPAM - felipe.lenti@ipam.org.br</em></h4>
+<div>
+    <img src='https://github.com/mapbiomas-brazil/cerrado/blob/mapbiomas60/2-general-map/www/ipam_logo.jpg?raw=true' height='auto' width='160' align='right'>
+    <h1>Cerrado biome - Collection 9</h1>
 </div>
 
-# About
-This folder contains the scripts to classify and post-process the Cerrado Biome.
+Developed by [Instituto de Pesquisa Ambiental da Amazônia - IPAM](https://ipam.org.br/)<br>
 
-We recommend that you read the Cerrado Biome Appendix of the Algorithm Theoretical Basis Document (ATBD).
+## About
+This folder contains the scripts to classify and filter the ***Cerrado*** Biome with Landsat images.
 
-# Pre-processing (Google Earth Engine Code Editor JavaScript)
-Step01: build stable pixels from Colleciton 4.1 and save a new asset. 
-Step02: calculate area proportion for each class to each region that will be used to generate training samples
-Step03: export balanced training samples for each region
-Step04: export training samples for each year
+For detailed information about the classification and methodology, please read the Cerrado biome Appendix of the [Algorithm Theoretical Basis Document (ATBD).](https://brasil.mapbiomas.org/download-dos-atbds-com-metodo-detalhado/)
 
-# Classification (Google Earth Engine Python API)
-Step05: export classification for each region
+## How to use
+1. Create an account in Google Earth Engine plataform.
+2. Download or clone this repository to your local workspace.
+   
+## Pre-processing
+✔ Step01: Build stable pixels from Collection 4.1 and save a new asset.
+✔ Step02: Calculate area proportion for each class in each region to generate training samples.
+✔ Step03: Export balanced training samples for each region.
+✔ Step04: Export training samples for each year.
 
-# Post-processing (Google Earth Engine Code Editor JavaScript)
-Step06: merge classification of each region and apply Gap fill filter to remove NODATA
-Step07a: create asset with 10 an 12 changes in classification
-Step07b: apply incident filter to remove pixels with 10 an 12 changes from forest class
-Step08: apply temporal filter
-Step09: apply spatial filter
-Step10: apply frequency filter
+## Classification
+✔ Step05: Export classification for each region.
+
+## Post-processing
+✔ Step06: Merge classification results and apply a Gap Fill filter.
+✔ Step07a: Create an asset tracking changes in classification.
+✔ Step07b: Apply incident filter.
+✔ Step08: Apply temporal filter
+✔ Step09: Apply spatial filter
+✔ Step10: Apply frequency filter
+
+## Contact
+For clarification or issue/bug report, please write to <felipe.lenti@ipam.org.br>
