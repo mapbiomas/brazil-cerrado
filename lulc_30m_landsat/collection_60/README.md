@@ -8,7 +8,7 @@ Developed by [Instituto de Pesquisa Ambiental da Amazônia - IPAM](https://ipam.
 ## About
 This folder contains the scripts to classify and filter the ***Cerrado*** Biome.
 
-For detailed information about the classification and methodology, please read the  [Cerrado biome Appendix of the Algorithm Theoretical Basis Document (ATBD)](https://mapbiomas-br-site.s3.amazonaws.com/Cerrado_Appendix_-_ATBD_Collection_5_v1.pdf)
+For detailed information about the classification and methodology, please read the  [Cerrado biome Appendix of the Algorithm Theoretical Basis Document (ATBD).](https://mapbiomas-br-site.s3.amazonaws.com/Cerrado_Appendix_-_ATBD_Collection_5_v1.pdf)
 
 ## How to use
 1. [Create an account](https://signup.earthengine.google.com/) in Google Earth Engine plataform.
@@ -33,4 +33,4 @@ Folders are organized by key-steps and contains a set of codes following the Cer
 4. [Integration of maps](https://github.com/mapbiomas/brazil-cerrado/tree/main/lulc_30m_landsat/collection_60/4-integrate-map)
 
 ## Contact
-For clarification or issue/bug report, please write to <dhemerson.costa@ipam.org.br> and/or <felipe.lenti@ipam.org.br>
+For clarification or issue/bug report, please write to <dhemerson.costa@ipam.org.br and barbara.silva@ipam.org.br>
