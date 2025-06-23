@@ -15,29 +15,21 @@ For detailed information about the classification and methodology, please read t
 2. Download or clone this repository to your local workspace.
    
 ## Pre-processing
-✔ Step01: Build stable pixels from Collection 4.1 and save a new asset.
-
-✔ Step02: Calculate area proportion for each class in each region to generate training samples.
-
-✔ Step03: Export balanced training samples for each region.
-
-✔ Step04: Export training samples for each year.
+- **Step 01**: Build stable pixels from Collection 4.1 and save them as a new asset.  
+- **Step 02**: Calculate class area proportions by region to guide training sample generation.  
+- **Step 03**: Export balanced training samples for each region.  
+- **Step 04**: Export training samples for each year.
 
 ## Classification
-✔ Step05: Export classification for each region.
+- **Step 05**: Export classification maps for each region.
 
 ## Post-processing
-✔ Step06: Merge classification results and apply a Gap Fill filter.
-
-✔ Step07a: Create an asset tracking changes in classification.
-
-✔ Step07b: Apply incident filter.
-
-✔ Step08: Apply temporal filter.
-
-✔ Step09: Apply spatial filter.
-
-✔ Step10: Apply frequency filter.
+- **Step 06**: Merge classification results and apply a Gap Fill filter.  
+- **Step 07a**: Generate an asset that tracks classification changes over time.  
+- **Step 07b**: Apply an incident filter to reduce classification noise.  
+- **Step 08**: Apply a temporal consistency filter.  
+- **Step 09**: Apply a spatial consistency filter.  
+- **Step 10**: Apply a frequency-based filter to refine results.
 
 ## Contact
-For clarification or issue/bug report, please write to <felipe.lenti@ipam.org.br>
+For clarification or issue/bug report, please write to <dhemerson.costa@ipam.org.br and barbara.silva@ipam.org.br>
