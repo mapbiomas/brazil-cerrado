@@ -1,5 +1,5 @@
 <div>
-    <img src='https://github.com/mapbiomas-brazil/cerrado/blob/mapbiomas60/2-general-map/www/ipam_logo.jpg?raw=true' height='auto' width='160' align='right'>
+    <img src='https://github.com/mapbiomas-brazil/cerrado/blob/mapbiomas60/2-general-map/www/ipam_logo.jpg?raw=true' height='auto' width='180' align='right'>
     <h1>Cerrado biome - Collection 8.0</h1>
 </div>
 
@@ -8,7 +8,7 @@ Developed by [Instituto de Pesquisa Ambiental da Amazônia - IPAM](https://ipam.
 ## About
 This folder contains the scripts to classify and filter the ***Cerrado*** Biome.
 
-For detailed information about the classification and methodology, please read the Cerrado biome Appendix of the [Algorithm Theoretical Basis Document (ATBD).](https://mapbiomas.org/download-dos-atbds)
+For detailed information about the classification and methodology, please read the Cerrado biome Appendix of the [Algorithm Theoretical Basis Document (ATBD)](https://mapbiomas.org/download-dos-atbds)
 
 ## How to use
 1. [Create an account](https://signup.earthengine.google.com/) in Google Earth Engine plataform.
