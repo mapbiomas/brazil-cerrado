@@ -9,12 +9,12 @@ It creates a 50 km buffer around reference samples and exports the resulting geo
 // Author: barbara.silva@ipam.org.br
 
 // Set the output version and asset directory
-var version = '5';
+var version = '4';
 var dirout = 'projects/ee-barbarasilvaipam/assets/collection-10_rocky-outcrop/masks/';
 
 // Load rocky outcrop reference samples (Collection 10)
 var rocky_samples = ee.FeatureCollection(
-  'projects/ee-barbarasilvaipam/assets/collection-10_rocky-outcrop/C10_rocky-outcrop-collected-v4'
+  'projects/ee-barbarasilvaipam/assets/collection-10_rocky-outcrop/C10_rocky-outcrop-collected-v3'
 ).geometry();
 Map.addLayer(rocky_samples, {color: 'black'}, 'Rocky Samples');
 
