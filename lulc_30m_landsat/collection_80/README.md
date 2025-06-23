@@ -24,11 +24,11 @@ For detailed information about the classification and methodology, please read t
 ## Workflow
 Folders are organized by key-steps and contains a set of codes following the Cerrado biome classification schema:
 
-1. [General map classification](https://github.com/mapbiomas/brazil-cerrado/tree/main/lulc_30m_landsat/collection_08/1-general-map)
+1. [General map classification](https://github.com/mapbiomas/brazil-cerrado/tree/main/lulc_30m_landsat/collection_80/1-general-map)
 
-2. [Rocky Outcrop classification](https://github.com/mapbiomas/brazil-cerrado/tree/main/lulc_30m_landsat/collection_08/2-rocky-outcrop)
+2. [Rocky Outcrop classification](https://github.com/mapbiomas/brazil-cerrado/tree/main/lulc_30m_landsat/collection_80/2-rocky-outcrop)
 
-3. [Integration](https://github.com/mapbiomas/brazil-cerrado/tree/main/lulc_30m_landsat/collection_08/3-integration)
+3. [Integration](https://github.com/mapbiomas/brazil-cerrado/tree/main/lulc_30m_landsat/collection_80/3-integration)
 
 ## Contact
 For clarification or issue/bug report, please write to <barbara.silva@ipam.org.br and dhemerson.costa@ipam.org.br>
