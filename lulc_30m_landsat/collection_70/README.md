@@ -31,4 +31,4 @@ Folders are organized by key-steps and contains a set of codes following the Cer
 3. [Integration](https://github.com/mapbiomas/brazil-cerrado/tree/main/lulc_30m_landsat/collection_70/3-integration)
 
 ## Contact
-For clarification or issue/bug report, please write to <dhemerson.costa@ipam.org.br>
+For clarification or issue/bug report, please write to <dhemerson.costa@ipam.org.br and barbara.silva@ipam.org.br>
