@@ -1,5 +1,5 @@
 <div>
-    <img src='https://github.com/mapbiomas/brazil-cerrado/blob/main/lulc_30m_landsat/collection_60/2-general-map/www/logo-ipam-30anos.jpg?raw=true' height='70' width='190' align='right'>
+    <img src='https://github.com/mapbiomas/brazil-cerrado/blob/main/lulc_30m_landsat/collection_60/2-general-map/www/logo-ipam-30anos.jpg?raw=true' height='60' width='190' align='right'>
     <h1>Cerrado biome - Collection 9.0</h1>
 </div>
 
