@@ -1,5 +1,5 @@
 <div>
-    <img src='https://github.com/mapbiomas-brazil/cerrado/blob/mapbiomas60/2-general-map/www/ipam_logo.jpg?raw=true' height='auto' width='160' align='right'>
+    <img src='https://github.com/mapbiomas-brazil/cerrado/blob/mapbiomas60/2-general-map/www/ipam_logo.jpg?raw=true' height='auto' width='180' align='right'>
     <h1>Cerrado biome - Collection 7.0</h1>
 </div>
 
@@ -8,7 +8,7 @@ Developed by [Instituto de Pesquisa Ambiental da Amazônia - IPAM](https://ipam.
 ## About
 This folder contains the scripts to classify and filter the ***Cerrado*** Biome.
 
-For detailed information about the classification and methodology, please read the Cerrado biome Appendix of the [Algorithm Theoretical Basis Document (ATBD).](https://mapbiomas.org/download-dos-atbds)
+For detailed information about the classification and methodology, please read the Cerrado biome Appendix of the [Algorithm Theoretical Basis Document (ATBD)](https://mapbiomas.org/download-dos-atbds)
 
 ## How to use
 1. [Create an account](https://signup.earthengine.google.com/) in Google Earth Engine plataform.
@@ -24,11 +24,11 @@ For detailed information about the classification and methodology, please read t
 ## Workflow
 Folders are organized by key-steps and contains a set of codes following the Cerrado biome classification schema:
 
-1. [General map classification](https://github.com/mapbiomas/brazil-cerrado/tree/main/lulc_30m_landsat/collection_07/1-general-map)
+1. [General map classification](https://github.com/mapbiomas/brazil-cerrado/tree/main/lulc_30m_landsat/collection_70/1-general-map)
 
-2. [Rocky Outcrop classification](https://github.com/mapbiomas/brazil-cerrado/tree/main/lulc_30m_landsat/collection_07/2-rocky-outcrop)
+2. [Rocky Outcrop classification](https://github.com/mapbiomas/brazil-cerrado/tree/main/lulc_30m_landsat/collection_70/2-rocky-outcrop)
 
-3. [Integration](https://github.com/mapbiomas/brazil-cerrado/tree/main/lulc_30m_landsat/collection_07/3-integration)
+3. [Integration](https://github.com/mapbiomas/brazil-cerrado/tree/main/lulc_30m_landsat/collection_70/3-integration)
 
 ## Contact
 For clarification or issue/bug report, please write to <dhemerson.costa@ipam.org.br>
