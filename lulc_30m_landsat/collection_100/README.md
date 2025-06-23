@@ -15,11 +15,9 @@ For detailed information about the classification and methodology, please read t
 
 2. [Install Python](https://www.python.org/downloads/) version 3.x.
 
-3. Install Earth Engine [Python API](https://developers.google.com/earth-engine/guides/python_install) and get the credentials. 
+3. [Install Visual Studio Code](https://code.visualstudio.com/download) most updated version
 
-4. [Install R base](https://cran.r-project.org/bin/) version 4.x and [Install R Studio Desktop.](https://www.rstudio.com/products/rstudio/download/)
-
-5. Download or clone this repository to your local workspace.
+4. Download or clone this repository to your local workspace.
 
 ## Workflow
 Folders are organized by key-steps and contains a set of codes following the Cerrado biome classification schema:
