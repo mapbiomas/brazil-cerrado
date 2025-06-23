@@ -1,109 +1,119 @@
-// -- -- -- -- 03_samplePoints
-// sort stratified spatialPoints by region using stable pixels
-// barbara.silva@ipam.org.br
+// --- --- --- 03_samplePoints
 
-// Define string to use as metadata
-var version = '3';  // label string
+/* 
+Generate stratified sample points using stable pixels and class proportions
+Description: This script generates stratified random sample points by land cover class using stable pixels as reference. 
+It uses class area proportions to determine sample size and merges the resulting points with pre-collected rocky outcrop samples. 
+*/
 
-// Reference proportion
-var file_in = ee.FeatureCollection('projects/barbaracosta-ipam/assets/collection-9_rocky-outcrop/sample/area/stable_v3');
+// Author: barbara.silva@ipam.org.br
 
-// Read area of interest
-var aoi_vec = ee.FeatureCollection('projects/barbaracosta-ipam/assets/collection-9_rocky-outcrop/masks/aoi_v3').geometry();
+// Set script version
+var version = '4';
+
+// Load reference area proportions (computed previously)
+var file_in = ee.FeatureCollection(
+  'projects/ee-barbarasilvaipam/assets/collection-10_rocky-outcrop/sample/area/stable_v4'
+);
+
+// Load Area of Interest (AOI)
+var aoi_vec = ee.FeatureCollection(
+  'projects/ee-barbarasilvaipam/assets/collection-10_rocky-outcrop/masks/aoi_v4'
+).geometry();
 var aoi_img = ee.Image(1).clip(aoi_vec);
-Map.addLayer(aoi_img, {palette:['red']}, 'Area of Interest');
+Map.addLayer(aoi_img, {palette: ['red']}, 'Area of Interest');
 
-// Define output
-var output = 'projects/barbaracosta-ipam/assets/collection-9_rocky-outcrop/sample/points/';
+// Define output path
+var output = 'projects/ee-barbarasilvaipam/assets/collection-10_rocky-outcrop/sample/points/';
 
-// Define classes to generate samples
-var classes = [1, 2, 29];
+// Define land cover classes for sample generation
+var classes = [1, 2, 3, 4];
 
-// Rocky outcrop samples
-var rocky_samples = ee.FeatureCollection('projects/barbaracosta-ipam/assets/collection-9_rocky-outcrop/sample/rocky-outcrop-collected_v2')
-        // Insert reference class [29] following the mapbiomas schema
-        .map(function(feature) {
-          return feature.set({'class': '29'}).select(['class']);
-        });
-        
-// Define sample size
-var sampleSize = 13000;    
-var nSamplesMin = rocky_samples.size().round(); 
+// Load rocky outcrop samples and assign class value 29
+var rocky_samples = ee.FeatureCollection(
+  'projects/ee-barbarasilvaipam/assets/collection-10_rocky-outcrop/C10_rocky-outcrop-collected-v3'
+).map(function(feature) {
+  return feature.set({'class': '29'}).select(['class']);
+});
 
-// Stable pixels from collection 8
-var stablePixels = ee.Image('projects/barbaracosta-ipam/assets/collection-9_rocky-outcrop/masks/cerrado_rockyTrainingMask_1985_2022_v3')
-                  .rename('class');
-     
-// Cerrado biome 
-var regionsCollection =  ee.FeatureCollection('projects/mapbiomas-workspace/AUXILIAR/biomas-2019')
-                              .filterMetadata('Bioma', 'equals', 'Cerrado');
+// Set desired total sample size and minimum for rocky outcrop
+var sampleSize = 4480;
+var nSamplesMin = rocky_samples.size().round();
 
-// Random color schema  
+// Load stable pixels classified by class
+var stablePixels = ee.Image(
+  'projects/ee-barbarasilvaipam/assets/collection-10_rocky-outcrop/masks/cerrado_rockyTrainingMask_1985_2023_v4'
+).rename('class');
+
+// Load Cerrado biome mask
+var regionsCollection = ee.FeatureCollection(
+  'projects/mapbiomas-workspace/AUXILIAR/biomas-2019'
+).filterMetadata('Bioma', 'equals', 'Cerrado');
+
+// Visualize stable pixels
 var vis = {
-    'min': 1,
-    'max': 29,
-    'palette': ["32a65e","FFFFB2", "ffaa5f"]
+  min: 1,
+  max: 29,
+  palette: ["32a65e", "FFFFB2", "2532e4", "ffaa5f"]
 };
+Map.addLayer(stablePixels, vis, 'Stable Pixels');
 
-Map.addLayer(stablePixels, vis, 'stable pixels');
-
-// Read the area for each class (from previous step)
+// Extract area (km²) per class from input reference
 var vegetation = ee.Number(file_in.first().get('1'));
-var nonvegetation = ee.Number(file_in.first().get('2'));
-var rocky = ee.Number(file_in.first().get('29'));
+var water = ee.Number(file_in.first().get('2'));
+var grassland = ee.Number(file_in.first().get('3'));
+var nonvegetation = ee.Number(file_in.first().get('4'));
 
-// Compute the total area 
+// Compute total area of all classes
 var total = vegetation
-          .add(nonvegetation)
-          .add(rocky);
+  .add(water)
+  .add(grassland)
+  .add(nonvegetation);
 
-// Define the equation to compute the n of samples
-var computeSize = function (number) {
-  return number.divide(total).multiply(sampleSize).round().int16().max(nSamplesMin);
+// Function to compute sample size based on area proportion
+var computeSize = function(area) {
+  return area.divide(total).multiply(sampleSize).round().int16().max(nSamplesMin);
 };
-  
-// Apply the equation to compute the number of samples
-var n_vegetation = computeSize(ee.Number(vegetation));
-var n_nonvegetation = computeSize(ee.Number(nonvegetation));
-var n_rocky = computeSize(ee.Number(rocky));
 
-// Generate the sample points
-var training = stablePixels.stratifiedSample(
-                              {'scale': 30,
-                               'classBand': 'class', 
-                               'numPoints': 0,
-                               'region': aoi_img.geometry(),
-                               'seed': 1,
-                               'geometries': true,
-                               'classValues': classes,
-                               'classPoints': [n_vegetation, n_nonvegetation, n_rocky]
-                                }
-                              );
+// Compute number of samples per class
+var n_vegetation = computeSize(vegetation);
+var n_water = computeSize(water);
+var n_grassland = computeSize(grassland);
+var n_nonvegetation = computeSize(nonvegetation);
 
-// Plot points
-Map.addLayer(training, {}, 'samplePoints');
+// Generate stratified sample points
+var training = stablePixels.stratifiedSample({
+  scale: 30,
+  classBand: 'class',
+  numPoints: 0,
+  region: aoi_img.geometry(),
+  seed: 1,
+  geometries: true,
+  classValues: classes,
+  classPoints: [n_vegetation, n_water, n_grassland, n_nonvegetation]
+});
 
-// Print diagnosis for each class
-print('vegetation', training.filterMetadata('class', 'equals', 1).size());
-print('nonvegetation', training.filterMetadata('class', 'equals', 2).size());
-print('rocky', training.filterMetadata('class', 'equals', 29).size());
-
-// Merge with rocky samples
+// Merge stratified samples with rocky outcrop samples
 training = ee.FeatureCollection(training).merge(rocky_samples);
-print ("training samples", training.first());
 
-// Convert the 'class' column to integers
+// Convert class values to integer type
 var trainingSamplesFixed = training.map(function(feature) {
   var classValue = ee.Number.parse(feature.get('class'));
   return feature.set('class', classValue);
 });
 
-// Check if the conversion was done correctly
-print("trainingSamplesFixed", trainingSamplesFixed.first());
+// Visualize and validate output
+Map.addLayer(trainingSamplesFixed, {}, 'Sample Points');
+print('Total Sample Points:', trainingSamplesFixed.size());
+print('Vegetation:', trainingSamplesFixed.filterMetadata('class', 'equals', 1).size());
+print('Water:', trainingSamplesFixed.filterMetadata('class', 'equals', 2).size());
+print('Grassland:', trainingSamplesFixed.filterMetadata('class', 'equals', 3).size());
+print('Non-vegetation:', trainingSamplesFixed.filterMetadata('class', 'equals', 4).size());
+print('Rocky Outcrop:', trainingSamplesFixed.filterMetadata('class', 'equals', 29).size());
 
-// Export as GEE asset
-Export.table.toAsset({'collection': trainingSamplesFixed,
-                      'description': 'samplePoints_v' + version,
-                      'assetId':  output + 'samplePoints_v' + version
-                      }
-                    );
+// Export the final sample points as GEE asset
+Export.table.toAsset({
+  collection: trainingSamplesFixed,
+  description: 'samplePoints_v' + version,
+  assetId: output + 'samplePoints_v' + version
+});
