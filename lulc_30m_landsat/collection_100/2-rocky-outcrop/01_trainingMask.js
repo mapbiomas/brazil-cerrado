@@ -1,84 +1,102 @@
-// -- -- -- -- 01_trainingMask
-// generate training mask based in stable pixels from mapbiomas collection 8.0
-// barbara.silva@ipam.org.br
+// --- --- --- 01_trainingMask
 
-// Output version
-var version = '3';
+/*
+Generate a training mask based on stable pixels from MapBiomas Collection
+Description: This script generates a training mask for the rocky outcrop class based on stable pixels from MapBiomas Collection 9.0 (1985–2023). 
+It blends classifications from Collection 9.0 and 10.0, detects stable pixels over time, and exports the result as a GEE asset.
+*/
 
-// Set directory for the output file
-var dirout = 'projects/barbaracosta-ipam/assets/collection-9_rocky-outcrop/masks/';
+// Author: barbara.silva@ipam.org.br
 
-// Read area of interest
-var aoi_vec = ee.FeatureCollection("projects/barbaracosta-ipam/assets/collection-9_rocky-outcrop/masks/aoi_v3");
+// Define output version and asset directory
+var version = '4';
+var dirout = 'projects/ee-barbarasilvaipam/assets/collection-10_rocky-outcrop/masks/';
+
+// Load Area of Interest (AOI)
+var aoi_vec = ee.FeatureCollection(
+  "projects/ee-barbarasilvaipam/assets/collection-10_rocky-outcrop/masks/aoi_v2"
+);
 var aoi_img = ee.Image(1).clip(aoi_vec);
-Map.addLayer(aoi_vec, {palette:['red']}, 'Area of Interest');
+Map.addLayer(aoi_vec, {palette: ['red']}, 'Area of Interest');
 
-// Random color schema  
+// Set visualization parameters
 var palettes = require('users/mapbiomas/modules:Palettes.js');
 var vis = {
-    'min': 1,
-    'max': 29,
-    'palette': ["32a65e","FFFFB2", "ffaa5f"]
+  min: 1,
+  max: 29,
+  palette: ["32a65e", "2532e4", "d6bc74", "edde8e", "ffaa5f"]
 };
 
-// Load mapbiomas collection 8.0
-var collection = ee.Image('projects/mapbiomas-workspace/public/collection8/mapbiomas_collection80_integration_v1').updateMask(aoi_img);
+// Load MapBiomas Collection 9.0
+var collection = ee.Image(
+  'projects/mapbiomas-public/assets/brazil/lulc/collection9/mapbiomas_collection90_integration_v1'
+).updateMask(aoi_img);
 
-// Set function to reclassify collection by native vegetation (1), non‑vegetation (2) and rocky outcrop (29)
+// Load MapBiomas Collection 10.0 (development version)
+var collection_10 = ee.Image(
+  'projects/mapbiomas-workspace/COLECAO_DEV/COLECAO10_DEV/CERRADO/LANDSAT/C10-POST-CLASSIFICATION/CERRADO_C10_gapfill_v1_incidence_v2_frequency_v3_temporal_v12_noFalseRegrowth_v7_geomorpho_v1_sp_v1'
+).updateMask(aoi_img);
+
+// Remap Collection 9.0 to isolate the rocky outcrop class (29)
 var reclassify = function(image) {
   return image.remap({
-    'from': [3, 4, 5, 6, 49, 11, 12, 32, 29, 50, 13, 15, 19, 39, 20, 40, 62, 41, 46, 47, 35, 48, 9, 21, 23, 24, 30, 25, 33, 31, 27],
-    'to':   [1, 1, 1, 1,  1,  1,  1,  1, 29,  1,  1,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2, 2,  2,  2,  2,  2,  2,  2,  2,  2]
-    }
-  );
+    from: [29],
+    to:   [29]
+  });
 };
 
-// Set function to compute the number of classes over a given time-series 
+// Remap Collection 10.0 to group native vegetation, non-vegetation, and outcrop
+var reclassify_a = function(image) {
+  return image.remap({
+    from: [3, 4, 11, 12, 15, 18, 25, 33],
+    to:   [1, 1,  2,  3,  4,  4,  4,  2]
+  });
+};
+
+// Compute number of distinct classes per pixel over time
 var numberOfClasses = function(image) {
-    return image.reduce(ee.Reducer.countDistinctNonNull()).rename('number_of_classes');
+  return image.reduce(ee.Reducer.countDistinctNonNull()).rename('number_of_classes');
 };
 
-// Set years to be processed 
-var years = [ 1985, 1986, 1987, 1988, 1989, 1990, 
-              1991, 1992, 1993, 1994, 1995, 1996, 
-              1997, 1998, 1999, 2000, 2001, 2002, 
-              2003, 2004, 2005, 2006, 2007, 2008, 
-              2009, 2010, 2011, 2012, 2013, 2014,
-              2015, 2016, 2017, 2018, 2019, 2020, 
-              2021, 2022];
+// List of years to process
+var years = [
+  1985, 1986, 1987, 1988, 1989, 1990, 
+  1991, 1992, 1993, 1994, 1995, 1996, 
+  1997, 1998, 1999, 2000, 2001, 2002, 
+  2003, 2004, 2005, 2006, 2007, 2008, 
+  2009, 2010, 2011, 2012, 2013, 2014,
+  2015, 2016, 2017, 2018, 2019, 2020, 
+  2021, 2022, 2023
+];
 
-// Remap collection to  native vegetation and non‑vegetation classes 
-var recipe = ee.Image([]);      // build an empty container
+// Initialize container to store reclassified images
+var container = ee.Image([]);
 
-// For each year
-years.forEach(function(i) {
-  
-  // Select classification for the year i
-  var yi = reclassify(collection.select('classification_' + i)).rename('classification_' + i);
-  
-  // Store into a container
-  recipe = recipe.addBands(yi);
+// For each year, blend the collections and add as a new band
+years.forEach(function(year) {
+  var band9 = reclassify(collection.select('classification_' + year)).rename('classification_' + year);
+  var band10 = reclassify_a(collection_10.select('classification_' + year)).rename('classification_' + year);
+  var blended = band10.blend(band9);
+  container = container.addBands(blended);
 });
 
-// Get the number of classes 
-var nClass = numberOfClasses(recipe);
+// Count how many distinct classes exist over the time series
+var nClass = numberOfClasses(container);
 
-// Now, get only the stable pixels (nClass equals to one)
-var stable = recipe.select(0).updateMask(nClass.eq(1));
+// Keep only stable pixels (with the same class throughout the period)
+var stable = container.select(0).updateMask(nClass.eq(1));
 
-// Plot stable pixels
-Map.addLayer(stable, vis, 'MB stable pixels');
-print ('MB stable pixels', stable);
+// Visualize and print the stable mask
+Map.addLayer(stable, vis, 'MB Stable Pixels');
+print('MB Stable Pixels', stable);
 
-// Export as GEE asset
+// Export the stable pixels as a GEE asset
 Export.image.toAsset({
-    "image": stable,
-    "description": 'cerrado_rockyTrainingMask_1985_2022_v' + version,
-    "assetId": dirout + 'cerrado_rockyTrainingMask_1985_2022_v'+ version,
-    "scale": 30,
-    "pyramidingPolicy": {
-        '.default': 'mode'
-    },
-    "maxPixels": 1e13,
-    "region": aoi_vec.geometry()
+  image: stable,
+  description: 'cerrado_rockyTrainingMask_1985_2023_v' + version,
+  assetId: dirout + 'cerrado_rockyTrainingMask_1985_2023_v' + version,
+  scale: 30,
+  pyramidingPolicy: {'.default': 'mode'},
+  maxPixels: 1e13,
+  region: aoi_vec.geometry()
 });
