@@ -1,75 +1,89 @@
-// -- -- -- -- 02_computeProportion
-// compute area by class to be used as reference to estimate samples of rocky outcrop
-// barbara.silva@ipam.org.br
+// --- --- --- 02_computeProportion
 
-// Output version
-var output_version = '3';
-var input_version = '3';
+/*
+Compute class area within the AOI to support rocky outcrop sample estimation
+Description: This script computes the area (in square kilometers) of each land cover class within the AOI based on stable pixels. 
+The resulting statistics are used to guide the sampling strategy for rocky outcrop classification.
+*/
 
-// Define classes to be assessed
-var classes = [1, 2, 29];
+// Author: barbara.silva@ipam.org.br
 
-// Output directory
-var dirout = 'projects/barbaracosta-ipam/assets/collection-9_rocky-outcrop/sample/area/';
+// Define output and input versions
+var output_version = '4';
+var input_version = '4';
 
-// Read area of interest
-var aoi_vec = ee.FeatureCollection('projects/barbaracosta-ipam/assets/collection-9_rocky-outcrop/masks/aoi_v3').geometry();
+// List of classes to compute area for
+var classes = [1, 2, 3, 4, 29];
+
+// Define output asset directory
+var dirout = 'projects/ee-barbarasilvaipam/assets/collection-10_rocky-outcrop/sample/area/';
+
+// Load Area of Interest (AOI)
+var aoi_vec = ee.FeatureCollection(
+  'projects/ee-barbarasilvaipam/assets/collection-10_rocky-outcrop/masks/aoi_v4'
+);
 var aoi_img = ee.Image(1).clip(aoi_vec);
-Map.addLayer(aoi_img, {palette:['red']}, 'Area of Interest');
+Map.addLayer(aoi_img, {palette: ['red']}, 'Area of Interest');
 
-// Stable pixels from collection 8
-var stable = ee.Image('projects/barbaracosta-ipam/assets/collection-9_rocky-outcrop/masks/cerrado_rockyTrainingMask_1985_2022_v'+input_version);
+// Load stable pixels mask (Collection 9.0 and 10.0)
+var stable = ee.Image(
+  'projects/ee-barbarasilvaipam/assets/collection-10_rocky-outcrop/masks/cerrado_rockyTrainingMask_1985_2023_v' + input_version
+);
 
-// Random color schema  
+// Print pixel count histogram for each class
+var pixel_values = stable.reduceRegion({
+  reducer: ee.Reducer.frequencyHistogram(),
+  geometry: aoi_vec.geometry(),
+  scale: 30,
+  maxPixels: 1e14
+});
+print('Stable Pixels Histogram:', pixel_values);
+
+// Visualize stable pixels
 var vis = {
-    'min': 1,
-    'max': 29,
-    'palette': ["32a65e","FFFFB2", "ffaa5f"]
+  min: 1,
+  max: 29,
+  palette: ["32a65e", "2532e4", "d6bc74", "edde8e", "ffaa5f"]
+};
+Map.addLayer(stable, vis, 'Stable Pixels');
+print('Stable Image', stable);
+
+// Define pixel area image in square kilometers
+var pixelArea = ee.Image.pixelArea().divide(1e6);
+
+// Function to compute area per class for each feature
+var getArea = function(feature) {
+  var mapbiomas_i = stable.clip(feature);
+
+  classes.forEach(function(class_j) {
+    var referenceArea = pixelArea.mask(mapbiomas_i.eq(class_j));
+
+    // Reduce area and add to feature properties
+    feature = feature.set(
+      String(class_j),
+      ee.Number(referenceArea.reduceRegion({
+        reducer: ee.Reducer.sum(),
+        geometry: feature.geometry(),
+        scale: 30,
+        maxPixels: 1e13,
+        tileScale: 4
+      }).get('area'))
+      .multiply(10000)
+      .round()
+      .divide(10000) // Round to 4 decimal places
+    );
+  });
+
+  return feature;
 };
 
-Map.addLayer(stable, vis, 'stable pixels');
-print ('stable', stable);
+// Apply area computation for AOI
+var computed_obj = aoi_vec.map(getArea);
+print('Result:', computed_obj);
 
-// Get cerrado biome layer
-var cerrado = ee.FeatureCollection('projects/mapbiomas-workspace/AUXILIAR/biomas-2019')
-                .filterMetadata('Bioma', 'equals', 'Cerrado');
-
-// Define function to compute area (skm)
-var pixelArea = ee.Image.pixelArea().divide(1000000); //km²
-
-// Define function to get class area 
-// For each region 
-var getArea = function(feature) {
-
-  // Get classification for the region [i]
-  var mapbiomas_i = stable.clip(feature);
-  
-  // For each class [j]
-  classes.forEach(function(class_j) {
-
-    // Create the reference area
-    var reference_ij = pixelArea.mask(mapbiomas_i.eq(class_j));
-
-    // Compute area and insert as metadata into the feature 
-    feature = feature.set(String(class_j),
-                         ee.Number(reference_ij.reduceRegion({
-                                      reducer: ee.Reducer.sum(),
-                                      geometry: feature.geometry(),
-                                      scale: 30,
-                                      maxPixels: 1e13,
-                                      tileScale: 4}
-                                    ).get('area')
-                                  )
-                              ); // End of set
-                          }); // End of class_j function
-  // Return feature
-  return feature;
-}; 
-
-var computed_obj = cerrado.map(getArea);
-print ('Result: ', computed_obj);
-
-// Export computation as GEE asset
-Export.table.toAsset({'collection': computed_obj, 
-                      'description': 'stable_v' + output_version,
-                      'assetId': dirout + 'stable_v' + output_version});
+// Export area statistics as GEE asset
+Export.table.toAsset({
+  collection: computed_obj,
+  description: 'stable_v' + output_version,
+  assetId: dirout + 'stable_v' + output_version
+});
