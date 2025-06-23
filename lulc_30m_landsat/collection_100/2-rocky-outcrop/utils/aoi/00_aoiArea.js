@@ -1,28 +1,35 @@
-// -- -- -- -- 00_aoiArea
-// define the area to map the rocky outcrop class
-// barbara.silva@ipam.org.br
+// --- --- --- 00_aoiArea
 
-// Define string to use as version
-var version = '3';
-var dirout = 'projects/barbaracosta-ipam/assets/collection-9_rocky-outcrop/masks/';
+/* 
+Define the Area of Interest (AOI) for mapping the rocky outcrop class
+Description: This script defines the Area of Interest (AOI) for mapping the rocky outcrop class. 
+It creates a 50 km buffer around reference samples and exports the resulting geometry as a GEE asset. 
+*/
 
-// Rocky outcrop samples updated to Collection 9.0
-var rocky_samples = ee.FeatureCollection('projects/barbaracosta-ipam/assets/collection-9_rocky-outcrop/sample/rocky-outcrop-collected_v2').geometry();
-Map.addLayer(rocky_samples, {color: 'black'}, 'rocky_samples');
+// Author: barbara.silva@ipam.org.br
 
-// Define a buffer 50,000 m
+// Set the output version and asset directory
+var version = '5';
+var dirout = 'projects/ee-barbarasilvaipam/assets/collection-10_rocky-outcrop/masks/';
+
+// Load rocky outcrop reference samples (Collection 10)
+var rocky_samples = ee.FeatureCollection(
+  'projects/ee-barbarasilvaipam/assets/collection-10_rocky-outcrop/C10_rocky-outcrop-collected-v4'
+).geometry();
+Map.addLayer(rocky_samples, {color: 'black'}, 'Rocky Samples');
+
+// Create a 50 km buffer around the samples
 var buffer = rocky_samples.buffer(50000);
-Map.addLayer(buffer, {color: 'Green'}, 'buffer');
+Map.addLayer(buffer, {color: 'green'}, 'Buffer');
 
-// Create a feature collection
+// Wrap buffer geometry into a FeatureCollection
 var featureCollection = ee.FeatureCollection([buffer]);
-print ('AOI', featureCollection);
+print('AOI', featureCollection);
+Map.addLayer(featureCollection, {color: 'blue'}, 'AOI Area');
 
-Map.addLayer(featureCollection, {color: 'Blue'}, 'AOI area');
-
-// Export as GEE asset
+// Export the AOI as a GEE asset
 Export.table.toAsset({
   collection: featureCollection,
-  description: 'aoi_v'+version,
-  assetId: dirout+'aoi_v'+version
-  });
+  description: 'aoi_v' + version,
+  assetId: dirout + 'aoi_v' + version
+});
