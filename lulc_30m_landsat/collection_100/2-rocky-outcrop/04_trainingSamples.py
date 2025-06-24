@@ -1,8 +1,8 @@
 ## --- --- --- 04_getSignatures
 
 # Generate annual training samples using Landsat mosaics and pre-defined points
-# Description: This script generates annual training samples for the rocky outcrop class by producing custom Landsat mosaics, applying spectral and geomorphometric metrics, and sampling stratified points using pre-defined training locations. 
-# The samples are exported as Earth Engine assets for model training.
+# Description: This script generates annual training samples for the rocky outcrop class by producing custom Landsat mosaics, 
+# applying spectral and geomorphometric metrics, and sampling stratified points using pre-defined training locations.
 
 # Author: barbara.silva@ipam.org.br
 
@@ -139,7 +139,7 @@ for year in years:
 
     # Store and enhance mosaic
     mosaic_dict[year] = mosaic
-    mosaic = addThreeYearMetrics(year, mosaic, mosaic_dict, aoi_img)
+    mosaic = addThreeYearMetrics(year, mosaic, mosaic_dict)
     mosaic = mosaic.clip(aoi_vec).multiply(10000).round().int64()
     mosaic = mosaic.addBands(ee.Image(year).int16().rename('year'))
 
