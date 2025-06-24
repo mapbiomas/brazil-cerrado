@@ -6,9 +6,9 @@
 Developed by [Instituto de Pesquisa Ambiental da Amazônia - IPAM](https://ipam.org.br/)<br>
 
 ## About
-This folder contains the scripts to classify and filter the ***Cerrado*** Biome.
+This folder contains the scripts used to classify and filter land use and land cover data for the **Cerrado** biome.
 
-For detailed information about the classification and methodology, please read the Cerrado biome Appendix of the [Algorithm Theoretical Basis Document (ATBD).](https://mapbiomas.org/download-dos-atbds).
+For detailed information about the classification process and methodology, refer to the Cerrado biome appendix in the [Algorithm Theoretical Basis Document (ATBD)](https://mapbiomas.org/download-dos-atbds).
 
 ## How to use
 1. [Create an account](https://signup.earthengine.google.com/) in Google Earth Engine plataform.
@@ -22,7 +22,7 @@ For detailed information about the classification and methodology, please read t
 5. Download or clone this repository to your local workspace.
 
 ## Workflow
-Folders are organized by key-steps and contains a set of codes following the Cerrado biome classification schema:
+The project is organized into folders representing key steps of the Cerrado biome classification schema. Each folder contains scripts relevant to a specific processing stage:
 
 1. [General map classification](https://github.com/mapbiomas/brazil-cerrado/tree/main/lulc_30m_landsat/collection_90/1-general-map)
 
