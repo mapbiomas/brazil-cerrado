@@ -11,12 +11,12 @@ This folder contains the scripts to classify and filter the ***Cerrado*** Biome.
 For detailed information about the classification and methodology, please read the Cerrado biome Appendix of the [Algorithm Theoretical Basis Document (ATBD)](https://mapbiomas.org/download-dos-atbds).
 
 ## How to use
-1. [Create an account](https://signup.earthengine.google.com/) in Google Earth Engine plataform.
+1. [Create an account](https://signup.earthengine.google.com/) on the Google Earth Engine platform.
 
 2. [Install Python](https://www.python.org/downloads/) version 3.x.
-
-3. [Install Visual Studio Code](https://code.visualstudio.com/download) most updated version
-
+   
+3. [Install Visual Studio Code](https://code.visualstudio.com/download), preferably the latest version.
+    
 4. Download or clone this repository to your local workspace.
 
 ## Workflow
