@@ -1,29 +1,45 @@
 <div>
     <img src='https://github.com/mapbiomas-brazil/cerrado/blob/mapbiomas60/2-general-map/www/ipam_logo.jpg?raw=true' height='auto' width='160' align='right'>
-    <h1> MAPBIOMAS BRAZIL - CERRADO BIOME </h1>
+    <h1> MAPBIOMAS BRAZIL – CERRADO BIOME </h1>
 </div>
 
-Developed by [Instituto de Pesquisa Ambiental da Amazônia - IPAM](https://ipam.org.br/)<br>
+Developed by the [Amazon Environmental Research Institute (IPAM)](https://ipam.org.br/)
+
+---
 
 ## About
-This folder contains the scripts to classify and filter the ***Cerrado*** Biome with Landsat and Sentinel images collections.
 
-For detailed information about the classification and methodology, please read the Cerrado biome Appendix of the [Algorithm Theoretical Basis Document (ATBD).](https://mapbiomas.org/download-dos-atbds)
+This repository contains scripts and resources for the mapping of land use and land cover (LULC) in the **Cerrado biome**, as part of the MapBiomas Brazil initiative. The mapping is based on multi-temporal remote sensing imagery from the **Landsat (30m)** and **Sentinel (10m)** satellite programs.
 
-## How to use
-1. [Create an account](https://signup.earthengine.google.com/) in Google Earth Engine plataform.
+The classification processes include data preparation, model training, classification, and a series of post-processing routines to ensure temporal and spatial consistency of the maps.
 
-2. [Install R base](https://cran.r-project.org/bin/) version 4.x and [Install R Studio Desktop.](https://www.rstudio.com/products/rstudio/download/)
+For detailed methodology and technical specifications, refer to the Cerrado Biome Appendix of the [Algorithm Theoretical Basis Document (ATBD)](https://mapbiomas.org/download-dos-atbds).
 
-3. Download or clone this repository to your local workspace.
+---
 
-## Workflow
-Folders are organized by collections and contains a set of codes following the Cerrado biome classification schema:
+## Repository Structure
 
-1. [LULC 30m Landsat](https://github.com/mapbiomas/brazil-cerrado/tree/main/lulc_30m_landsat): Land cover and land use data with a 30-meter spatial resolution, obtained from Landsat data
+The repository is organized into subfolders by image source and processing resolution, following the MapBiomas classification workflow for the Cerrado biome:
 
-2. [LULC 10m Sentinel](https://github.com/mapbiomas/brazil-cerrado/tree/main/lulc_10m_sentinel): Land cover and land use data with a 10-meter spatial resolution, obtained from Sentinel data.
+- [`lulc_30m_landsat`](https://github.com/mapbiomas/brazil-cerrado/tree/main/lulc_30m_landsat):  
+  Scripts for generating annual LULC maps at **30-meter resolution**, based on Landsat imagery.
 
+- [`lulc_10m_sentinel`](https://github.com/mapbiomas/brazil-cerrado/tree/main/lulc_10m_sentinel):  
+  Scripts for producing LULC maps at **10-meter resolution**, using Sentinel-2 imagery.
+
+Each subfolder includes a step-by-step processing chain with classification scripts, filtering procedures, and additional assets used in the generation of MapBiomas Cerrado collections.
+
+---
+
+## Citation
+
+If you use any part of this repository or the resulting data in your work, please cite MapBiomas and IPAM accordingly. For official data access and citation guidelines, visit the [MapBiomas Terms of Use](https://brasil.mapbiomas.org/termos-de-uso/). The MapBiomas data are public, open and free under Creative Commons CC-BY license.
+
+---
 
 ## Contact
-For clarification or issue/bug report, please write to <barbara.silva@ipam.org.br and dhemerson.costa@ipam.org.br>
+
+For questions, suggestions, or to report issues, please contact:
+
+- [barbara.silva@ipam.org.br](mailto:barbara.silva@ipam.org.br)  
+- [dhemerson.costa@ipam.org.br](mailto:dhemerson.costa@ipam.org.br)
