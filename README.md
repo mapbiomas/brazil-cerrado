@@ -3,7 +3,7 @@
     <h1> MAPBIOMAS BRAZIL – CERRADO BIOME </h1>
 </div>
 
-Developed by the [Amazon Environmental Research Institute (IPAM)](https://ipam.org.br/)
+Developed by the [Instituto de Pesquisa Ambiental da Amazônia (IPAM)](https://ipam.org.br/)
 
 ---
 
