@@ -26,7 +26,7 @@ var samplePoints = ee.FeatureCollection('projects/ee-barbarasilvaipam/assets/col
 // visualize
 Map.addLayer(samplePoints, {}, 'samplePoints');
 ```
-[Link to script] (https://code.earthengine.google.com/98c56a5bb6714d49cb8139696709487e)
+[Link to script](https://code.earthengine.google.com/98c56a5bb6714d49cb8139696709487e)
 
 ## 04_trainingSamples.R
 Use the sample points generated in the previous step to extract the spectral signatures from the Landsat Data Monthly image for each year.
