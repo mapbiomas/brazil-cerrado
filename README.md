@@ -43,3 +43,4 @@ For questions, suggestions, or to report issues, please contact:
 
 - [barbara.silva@ipam.org.br](mailto:barbara.silva@ipam.org.br)  
 - [dhemerson.costa@ipam.org.br](mailto:dhemerson.costa@ipam.org.br)
+- [contato@mapbiomas.org](mailto:contato@mapbiomas.org)
