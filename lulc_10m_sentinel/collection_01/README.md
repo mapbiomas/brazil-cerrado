@@ -9,7 +9,7 @@ Developed by [Instituto de Pesquisa Ambiental da Amazônia - IPAM](https://ipam.
 ## About
 This folder contains the scripts used to classify and filter land use and land cover data for the **Cerrado** biome.
 
-For detailed information about the classification process and methodology, please send an email to *contato@mapbiomas.org.br*.
+For detailed information about the classification process and methodology, please send an email to *contato@mapbiomas.org*.
 
 ## How to use
 1. [Create an account](https://signup.earthengine.google.com/) in Google Earth Engine plataform.
