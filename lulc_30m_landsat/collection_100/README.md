@@ -8,7 +8,7 @@ Developed by [Instituto de Pesquisa Ambiental da Amazônia - IPAM](https://ipam.
 ## About
 This folder contains the scripts used to classify and filter land use and land cover data for the **Cerrado** biome.
 
-For detailed information about the classification and methodology, please read the Cerrado biome Appendix of the [Algorithm Theoretical Basis Document (ATBD)](https://mapbiomas.org/download-dos-atbds).
+For detailed information about the classification process and methodology, refer to the Cerrado biome appendix in the [Algorithm Theoretical Basis Document (ATBD)](https://mapbiomas.org/download-dos-atbds).
 
 ## How to use
 1. [Create an account](https://signup.earthengine.google.com/) on the Google Earth Engine platform.
