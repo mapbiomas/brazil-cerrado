@@ -160,7 +160,7 @@ for obj in missing:
     collection = collection\
       .map(getNDVI).map(getNBR).map(getMNDWI).map(getPRI).map(getCAI).map(getEVI2)\
       .map(getGCVI).map(getGRND).map(getMSI).map(getGARI).map(getGNDVI).map(getMSAVI)\
-      .map(getTGSI).map(getHallCover).map(getHallHeigth)
+      .map(getHallCover).map(getHallHeigth)
 
     # Generate mosaic using specific criteria
     mosaic = getMosaic(
