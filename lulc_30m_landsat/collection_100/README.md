@@ -20,7 +20,7 @@ For detailed information about the classification process and methodology, refer
 4. Download or clone this repository to your local workspace.
 
 ## Workflow
-Folders are organized by key-steps and contains a set of codes following the Cerrado biome classification schema:
+The project is organized into folders representing key steps of the Cerrado biome classification schema. Each folder contains scripts relevant to a specific processing stage:
 
 1. [General map classification](https://github.com/mapbiomas/brazil-cerrado/tree/main/lulc_30m_landsat/collection_100/1-general-map)
 
