@@ -45,7 +45,7 @@ var reclassify = function(image) {
   });
 };
 
-// Remap Collection 10.0 to group native vegetation, non-vegetation, and outcrop
+// Remap Collection 10.0 to group native vegetation, non-vegetation, and rocky outcrop
 var reclassify_a = function(image) {
   return image.remap({
     from: [3, 4, 11, 12, 15, 18, 25, 33],
