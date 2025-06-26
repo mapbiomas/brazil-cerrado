@@ -27,7 +27,6 @@ from modules.SpectralIndexes import *
 from modules.Miscellaneous import *
 from modules.Mosaic import *
 from modules.SmaAndNdfi import *
-from modules.ThreeYearMetrics import *
 from modules import Map
 
 # Set input and output version
