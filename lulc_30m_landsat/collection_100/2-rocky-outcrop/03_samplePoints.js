@@ -1,10 +1,7 @@
 // --- --- --- 03_samplePoints
-
-/* 
-Generate stratified sample points using stable pixels and class proportions
-Description: This script generates stratified random sample points by land cover class using stable pixels as reference. 
-It uses class area proportions to determine sample size and merges the resulting points with pre-collected rocky outcrop samples. 
-*/
+// Generate stratified sample points using stable pixels and class proportions
+// Description: This script generates stratified random sample points by land cover class using stable pixels as reference. 
+// It uses class area proportions to determine sample size and merges the resulting points with pre-collected rocky outcrop samples. 
 
 // Author: barbara.silva@ipam.org.br
 
