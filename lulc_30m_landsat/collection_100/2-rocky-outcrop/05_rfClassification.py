@@ -1,5 +1,4 @@
 ## -- -- -- -- 05_rfClassification
-
 # Generate classification and probability maps for rocky outcrops in the Cerrado biome
 # Description: This script generates annual probability maps and classification layers for rocky outcrop and other land cover classes in the Brazilian Cerrado biome
 # using Landsat mosaics, spectral and geomorphometric variables, and a Random Forest classifier trained with sample points.
