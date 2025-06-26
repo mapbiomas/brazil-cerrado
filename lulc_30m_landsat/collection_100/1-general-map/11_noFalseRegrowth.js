@@ -195,7 +195,7 @@ Map.addLayer(finalClassification, vis, '03: Non-vegetated stability');
 print('03: Non-vegetated stability', finalClassification);
 
 // ----------------------------------------------------
-// Step 4: Sandbank Vegetation class (50) correction based on previous year
+// Step 4: Sandbank Vegetation (class 50) correction based on previous year
 // ----------------------------------------------------
 
 // Function to correct class 50 using previous year as reference
