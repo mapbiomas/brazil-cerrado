@@ -1,10 +1,7 @@
 // --- --- --- 02_computeProportion
-
-/*
-Compute class area within the AOI to support rocky outcrop sample estimation
-Description: This script computes the area (in square kilometers) of each land cover class within the AOI based on stable pixels. 
-The resulting statistics are used to guide the sampling strategy for rocky outcrop classification.
-*/
+// Compute class area within the AOI to support rocky outcrop sample estimation
+// Description: This script computes the area (in square kilometers) of each land cover class within the AOI based on stable pixels. 
+// The resulting statistics are used to guide the sampling strategy for rocky outcrop classification.
 
 // Author: barbara.silva@ipam.org.br
 
