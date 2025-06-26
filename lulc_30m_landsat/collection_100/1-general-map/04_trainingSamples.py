@@ -1,4 +1,4 @@
-# --- --- --- 04_trainingSamples.py
+# --- --- --- 04_trainingSamples
 # Generate annual training samples for land cover classification
 # using Landsat mosaics, spectral indices, SMA, fire history, geomorphometry,
 # and three-year temporal metrics for the Cerrado biome (1985–2024).
