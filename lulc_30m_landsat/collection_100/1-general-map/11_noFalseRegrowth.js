@@ -1,4 +1,5 @@
 // -- -- -- -- 11_noFalseRegrowth
+
 // This script applies post-classification filters to remove false regrowth of native vegetation in silviculture areas 
 // and wetlands. It also enforces temporal stability for specific land cover classes (non-vegetated and sandbank vegetation) 
 // in the Cerrado biome from 1985 to 2024.
