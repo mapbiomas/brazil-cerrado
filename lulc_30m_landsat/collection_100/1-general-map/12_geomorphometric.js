@@ -1,5 +1,4 @@
 // -- -- -- -- 12_geomorphometric
-
 // Applies a geomorphological filter to remove areas classified as wetlands (class 11) that occur in regions with a 
 // slope greater than 9% (approximately >5°), using data from the MERIT DEM.
 
