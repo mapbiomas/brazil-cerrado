@@ -56,6 +56,7 @@ Applies a post-classification filter to stabilize native vegetation classes base
 
 ## 10_temporal.js
 This filter applies a set of temporal consistency rules to correct short-term spurious transitions and ensure the stability of land use and land cover (LULC) classifications over time (1985–2024). It operates by comparing each pixel’s class over multi-year windows and applying logic to eliminate implausible transitions, enforce class persistence, and refine the first and last years of the time series. The filter follows these five main steps:
+
 *1. 5-year and 4-year window filtering:* The filter evaluates all the pixels in a 5-year moving window (from 1986 to 2021) and a 4-year moving window (from 1986 to 2022). The objective is to correct pixel values that present a specific class in the previous year (year -1), change in the current year and return to the initial class in the last year of the window (year +2 or year +3). It is applied to each land use and cover class in the following order: Savanna Formation (4), Wetland (11), Forest Formation (3), Grassland Formation (12), Sandbank Vegetation (50), Mosaic of Uses (21), Other Non-Vegetated Areas (25), and River, Lake and Ocean (33).
 
 *2. 3-year window filtering:* Similar to the first step, this rule identifies and corrects brief one-year transitions surrounded by the same class before and after (1986-2023). It uses a smaller window to capture and rectify short-term inconsistencies that were not addressed by the 4- or 5-year rules. The correction is executed in the same order of classes as in the initial step, ensuring temporal consistency over time.
@@ -68,9 +69,13 @@ This filter applies a set of temporal consistency rules to correct short-term sp
 
 ## 11_noFalseRegrowth.js
 This script applies four post-classification rules to prevent false regrowth of native vegetation (Forest Formation and Wetlands), and to stabilize classes such as Non-Vegetated (25) and Sandbank Vegetation (50) over time in the Cerrado biome. It targets known issues of misclassification caused by spectral confusion or inconsistencies in classification models.
+
 *1. Prevent Forest Formation regrowth in stable silviculture areas:* Pixels classified as Mosaic of Uses (class 21) for at least 7 consecutive years are not allowed to revert to Forest Formation (class 3).  If a forest class appears in these areas after this stable period, it is reverted back to 21. This prevents false reclassification of silviculture as native forest.
+
 *2. Correct false Wetland regeneration in early years (1985–1986):* For Wetland (class 11), the classification in 1985 and 1986 is adjusted based on 1987. If 1985 or 1986 shows a transition that does not match the more stable 1987 classification, the earlier years are corrected. Additionally, from 1986 onwards, abrupt appearances of wetlands not supported by the previous year’s classification are corrected by reverting to the previous year’s class.
+
 *3. Stabilize Other non Vegetated Areas:* If a pixel has been classified as Non-Vegetated (25) for at least 15 years and there is no occurrence of classes 12 (grassland) or 33 (water) in the entire time series, the pixel is considered stable. In these cases, the entire time series is reclassified as 25. This rule is restricted to a specific region in Gilbués, Piauí (PI), where this phenomenon is commonly observed.
+
 *4. Correct spurious appearance of Sandbank Vegetation:* When class 50 appears in a given year but was not present in the previous year, the classification is assumed to be incorrect and is reverted to the previous year’s class. This rule helps to remove isolated or unstable occurrences of Herbaceous Sandbank Vegetation, ensuring temporal consistency.
 
 ## 12_geomorphometric.js
