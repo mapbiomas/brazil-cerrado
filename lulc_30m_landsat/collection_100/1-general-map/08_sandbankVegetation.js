@@ -1,4 +1,5 @@
 // --- --- --- 08_sandbankVegetation
+
 // Identify and classify Herbaceous Sandbank Vegetation (Restinga Herbácea) using SAVI, soil, and HAND data
 // Combines SAVI thresholds, hydrological and soil masks, and reassigns class 50 for eligible native vegetation
 
