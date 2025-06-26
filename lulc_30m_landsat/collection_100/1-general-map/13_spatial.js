@@ -1,79 +1,75 @@
-// -- -- -- -- 11_spatial
-// post-processing filter: eliminate isolated or edge transition pixels, minimum area of 6 pixels
-// barbara.silva@ipam.org.br and dhemerson.costa@ipam.org.br
+// -- -- -- -- 13_spatial
 
-// Set root directory
-var root = 'projects/mapbiomas-workspace/COLECAO_DEV/COLECAO9_DEV/CERRADO/C9-GENERAL-POST/';
-var out = 'projects/mapbiomas-workspace/COLECAO_DEV/COLECAO9_DEV/CERRADO/C9-GENERAL-POST/';
+// Post-processing filter to remove isolated or edge pixels in classified images (minimum area: 6 pixels)
 
-// Set metadata
-var inputVersion = '16';
-var outputVersion = '4';
+// Author: barbara.silva@ipam.org.br
 
-// Define input file
-var inputFile = 'CERRADO_col9_gapfill_v8_incidence_v8_temporal_v8_frequency_v9_noFalseRegrowth_v'+inputVersion;
-
-// Import MapBiomas color schema
+// Import MapBiomas color palette
 var vis = {
-    'min': 0,
-    'max': 62,
-    'palette': require('users/mapbiomas/modules:Palettes.js').get('classification8')
+    min: 0,
+    max: 62,
+    palette:require('users/mapbiomas/modules:Palettes.js').get('classification8'),
+    bands: 'classification_2023'
 };
 
-// Load input classification
+// Set root directory 
+var root = 'projects/mapbiomas-workspace/COLECAO_DEV/COLECAO10_DEV/CERRADO/LANDSAT/C10-POST-CLASSIFICATION/';
+var out = 'projects/mapbiomas-workspace/COLECAO_DEV/COLECAO10_DEV/CERRADO/LANDSAT/C10-POST-CLASSIFICATION/';
+
+// Define input/output metadata
+var inputVersion = '11';
+var outputVersion = '10';
+
+// Define input file
+var inputFile = 'CERRADO_C10_gapfill_v11_incidence_v4_sandVeg_v3_freq_v7_temp_v16_falseReg_v29_geo_v'+inputVersion;
+
+// Load classification image
 var classificationInput = ee.Image(root + inputFile);
 print('Input classification', classificationInput);
+Map.addLayer(classificationInput, vis, 'Input classification');
 
-// Plot input version
-Map.addLayer(classificationInput.select(['classification_2010']), vis, 'input 2010');
-
-// Create an empty container
+// Create empty image container for output
 var filtered = ee.Image([]);
 
-// Set filter size
-var filter_size = 6;
+// Define spatial filter threshold (number of connected pixels)
+var filter_size = 8;
 
-// Apply first sequence of the spatial filter
-ee.List.sequence({'start': 1985, 'end': 2023}).getInfo()
+// First round of spatial filtering (remove small patches based on neighborhood mode)
+ee.List.sequence({'start': 1985, 'end': 2024}).getInfo()
       .forEach(function(year_i) {
-        // Compute the focal model
+        // Calculate focal mode (most frequent neighbor value)
         var focal_mode = classificationInput.select(['classification_' + year_i])
                 .unmask(0)
                 .focal_mode({'radius': 1, 'kernelType': 'square', 'units': 'pixels'});
  
-        // Compute the number of connections
+        // Calculate number of connected pixels with same class
         var connections = classificationInput.select(['classification_' + year_i])
                 .unmask(0)
                 .connectedPixelCount({'maxSize': 100, 'eightConnected': false});
         
-        // Get the focal model when the number of connections of same class is lower than parameter
+        // Mask isolated pixels below threshold and replace with focal mode
         var to_mask = focal_mode.updateMask(connections.lte(filter_size));
-
-        // Apply filter
         var classification_i = classificationInput.select(['classification_' + year_i])
                 .blend(to_mask)
                 .reproject('EPSG:4326', null, 30);
 
-        // Stack into container
         filtered = filtered.addBands(classification_i.updateMask(classification_i.neq(0)));
         }
       );
 
-// Plot first sequence of the spatial filter
-Map.addLayer(filtered.select(['classification_2010']), vis, 'filtered 2010 - round 1');
+Map.addLayer(filtered, vis, 'filtered - round 1');
 
-// Set container 
+// Second round of spatial filtering (refinement)
 var container = ee.Image([]);
 
-// Apply second sequence of the spatial filter
-ee.List.sequence({'start': 1985, 'end': 2023}).getInfo()
+ee.List.sequence({'start': 1985, 'end': 2024}).getInfo()
       .forEach(function(year_i) {
         // Compute the focal model
         var focal_mode = filtered.select(['classification_' + year_i])
                 .unmask(0)
                 .focal_mode({'radius': 1, 'kernelType': 'square', 'units': 'pixels'});
  
-        // Compute the number of connections
+        // Compute te number of connections
         var connections = filtered.select(['classification_' + year_i])
                 .unmask(0)
                 .connectedPixelCount({'maxSize': 100, 'eightConnected': false});
@@ -91,41 +87,44 @@ ee.List.sequence({'start': 1985, 'end': 2023}).getInfo()
         }
       );
 
-// Plot second sequence of the spatial filter
-Map.addLayer(container.select(['classification_2010']), vis, 'filtered 2010 - round 2');
+Map.addLayer(container, vis, 'filtered - round 2');
 
-// Set container 
+// Third round: Fill remaining zero values (gaps) using a larger neighborhood
 var container2 = ee.Image([]);
 
-// Fill zeros (blank spaces generated by regions register)
-ee.List.sequence({'start': 1985, 'end': 2023}).getInfo()
+ee.List.sequence({'start': 1985, 'end': 2024}).getInfo()
   .forEach(function(year_i) {
-    // Compute the focal mode with an extended kernel
+    // Apply focal mode with larger radius (fill gaps)
     var focal_mode =  container.select(['classification_' + year_i])
                 .unmask(0)
                 .focal_mode({'radius': 4, 'kernelType': 'square', 'units': 'pixels'});
                 
-    // Get only blank pixels (value equals to zero) 
+    // Identify pixels that remain as 0 (gaps)
     var to_mask = focal_mode.updateMask(container.select(['classification_2010']).unmask(0).eq(0));
-    
-    // Apply filter
-    var classification_i = container.select(['classification_' + '2010'])
+  
+    var classification_i = container.select(['classification_' + year_i])
                 .blend(to_mask)
                 .reproject('EPSG:4326', null, 30);
     
-    // Stack into container
     container2 = container2.addBands(classification_i.updateMask(classification_i.neq(0)));
   });
 
-// Plot final sequence of the spatial filter
-Map.addLayer(container2.select(['classification_2010']), vis, 'final filled');
+Map.addLayer(container2, vis, 'filtered - round 3');
+
+// Add coral reef mask (class 33) to classification
+var regions = ee.FeatureCollection('users/dh-conciani/collection7/classification_regions/vector_v2').filter(ee.Filter.eq('mapb', 1));
+var mask = ee.Image(33).clip(regions);
+
+container2 = mask.blend(container2);
+
+Map.addLayer(container2, vis, 'Output classification');
 print('Output classification', container2);
 
-// Export as GEE asset
+// export as GEE asset
 Export.image.toAsset({
     'image': container2,
-    'description': inputFile + '_spatial_v' + outputVersion,
-    'assetId': out + inputFile + '_spatial_v' + outputVersion,
+    'description': inputFile+ '_sp_v' + outputVersion,
+    'assetId': out + inputFile+ '_sp_v' + outputVersion,
     'pyramidingPolicy': {
         '.default': 'mode'
     },
