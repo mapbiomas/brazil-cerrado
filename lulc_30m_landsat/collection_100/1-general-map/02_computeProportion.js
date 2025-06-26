@@ -1,8 +1,8 @@
 // --- --- --- 02_computeProportion
-/* Compute area per class per ecoregion to support proportional sample distribution
-This script computes the area (in square kilometers) occupied by selected land use and cover classes within each ecoregion of the Cerrado biome for a given reference year. 
-The resulting table is used to estimate the proportional distribution of training samples for classification tasks.
-*/
+// Compute area per class per ecoregion to support proportional sample distribution
+// This script computes the area (in square kilometers) occupied by selected land use and cover classes within each ecoregion of the Cerrado biome for a given reference year. 
+// The resulting table is used to estimate the proportional distribution of training samples for classification tasks.
+
 // Author: barbara.silva@ipam.org.br
 
 // Define output path and version
