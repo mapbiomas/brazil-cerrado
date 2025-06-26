@@ -1,10 +1,7 @@
 // --- --- --- 06_gapFill
-
-/*
-Temporal gap-filling of classification maps using previous and next valid years
-Description: This script applies a temporal gap-filling filter to a time series of classified images (1985–2024), 
-filling NoData pixels using valid observations from previous or subsequent years.
-*/
+// Temporal gap-filling of classification maps using previous and next valid years
+// Description: This script applies a temporal gap-filling filter to a time series of classified images (1985–2024), 
+// filling NoData pixels using valid observations from previous or subsequent years.
 
 // Author: barbara.silva@ipam.org.br
 
