@@ -1,61 +1,64 @@
 // -- -- -- -- 07_incidence
-// post-processing filter: filter spurious transitions by using the number of changes, connection number, and mode reducer
-// barbara.silva@ipam.org.br and dhemerson.costa@ipam.org.br
 
-// Import mapbiomas color schema 
+// Apply a temporal consistency filter to remove spurious land cover transitions
+// using the number of transitions, connectivity analysis, and mode-based correction.
+
+// Author: barbara.silva@ipam.org.br
+
+// Import MapBiomas color palette
 var vis = {
     min: 0,
     max: 62,
-    palette:require('users/mapbiomas/modules:Palettes.js').get('classification8')
+    palette:require('users/mapbiomas/modules:Palettes.js').get('classification8'),
+    bands: 'classification_2023'
 };
 
 // Set root directory 
-var root = 'projects/mapbiomas-workspace/COLECAO_DEV/COLECAO9_DEV/CERRADO/C9-GENERAL-POST/';
-var out = 'projects/mapbiomas-workspace/COLECAO_DEV/COLECAO9_DEV/CERRADO/C9-GENERAL-POST/';
+var root = 'projects/mapbiomas-workspace/COLECAO_DEV/COLECAO10_DEV/CERRADO/LANDSAT/C10-POST-CLASSIFICATION/';
+var out = 'projects/mapbiomas-workspace/COLECAO_DEV/COLECAO10_DEV/CERRADO/LANDSAT/C10-POST-CLASSIFICATION/';
 
-// Set metadata
-var inputVersion = '8';
-var outputVersion = '8';
-var thresholdEvents = 13;
+// Define input/output metadata
+var inputVersion = '11';
+var outputVersion = '5';
+var thresholdEvents = 14;
 
 // Define input file
-var inputFile = 'CERRADO_col9_gapfill_v' + inputVersion;
+var inputFile = 'CERRADO_C10_gapfill_v' + inputVersion;
 
-// Load input classification
+// Load classification image
 var classificationInput = ee.Image(root + inputFile);
 print('Input classification', classificationInput);
-Map.addLayer(classificationInput.select(['classification_2023']), vis, 'Input classification');
+Map.addLayer(classificationInput, vis, 'Input classification');
 
-// Aggregate MapBiomas classes in level 2
+// Remap original MapBiomas classes into level 2 aggregation scheme
 var originalClasses = [
     3, 4,    // Forest, Savanna
     11, 12,  // Wetlands, Grasslands
     15,      // Pasture
     18,      // Agriculture
-    25,      // Non-vegetated areas
+    25,      // Non-vegetated
     33,      // Water
     27       // Non-observed
 ];
 
 var aggregatedClasses = [
-    2, 2,    // Forest, Savanna
-    2, 2,    // Wetlands, Grasslands
-    1,       // Pasture
-    1,       // Agriculture
-    1,       // Non-vegetated areas
-    7,       // Water
-    7        // Non-observed
+    2, 2,   // Forest, Savanna
+    2, 2,   // Wetlands, Grasslands
+    1,      // Pasture
+    1,      // Agriculture
+    1,      // Non-vegetated
+    7,      // Water
+    7       // Non-observed
 ];
 
 var classificationAggregated = ee.Image([]);
 
-// Remove 'forest' class from incidents filter (avoid over-estimation)
-var classification_remap = classificationInput.updateMask(classificationInput.neq(3));
+// Remove Non-vegetated class from incidents filter
+var classification_remap = classificationInput.updateMask(classificationInput.neq(25));
 
-// Set the list of years to be filtered
-ee.List.sequence({'start': 1985, 'end': 2023}).getInfo()
+// Process classification per year
+ee.List.sequence(1985, 2024).getInfo()
     .forEach(function(year) {
-      
         // Get year [i]
         var classificationYear = classification_remap.select(['classification_' + year])
             // Remap classes
@@ -68,10 +71,13 @@ ee.List.sequence({'start': 1985, 'end': 2023}).getInfo()
 
 classificationAggregated = classificationAggregated.updateMask(classificationAggregated.neq(0));
 
-// Compute number of classes and changes
+// Compute temporal metrics: number of classes and changes
 var numChanges = classificationAggregated.reduce(ee.Reducer.countRuns()).subtract(1).rename('number_of_changes');
-Map.addLayer(numChanges, {palette: ["#C8C8C8", "#FED266", "#FBA713", "#cb701b", "#a95512", "#662000", "#cb181d"],
-                                  min: 0, max: 15}, 'number of changes', false);
+Map.addLayer(numChanges, {
+  min: 0,
+  max: 15,
+  palette: ['#C8C8C8', '#FED266', '#FBA713', '#cb701b', '#a95512', '#662000', '#cb181d']
+}, 'Number of changes', false);
 
 // Get the count of connections
 var connectedNumChanges = numChanges.connectedPixelCount({
@@ -83,20 +89,22 @@ var connectedNumChanges = numChanges.connectedPixelCount({
 var modeImage = classification_remap.reduce(ee.Reducer.mode());
 
 // Get border pixels (high geolocation RMSE) to be masked by the mode (7 pixels = 0,6 ha)
+// The main objective is to identify unstable pixels in a patch of vegetation
 var borderMask = connectedNumChanges.lte(7).and(numChanges.gt(10));
 borderMask = borderMask.updateMask(borderMask.eq(1));
 
 // Get borders to rectify
+// Here, the main objective is to correct temporal instability in large areas of vegetation
 var rectBorder = modeImage.updateMask(borderMask);
 var rectAll = modeImage.updateMask(connectedNumChanges.gt(7).and(numChanges.gte(thresholdEvents)));
 
 // Blend masks
 var incidentsMask = rectBorder.blend(rectAll).toByte();
 
-// Apply the corrections
+// Apply the rectification
 var correctedClassification = classificationInput.blend(incidentsMask);
 
-Map.addLayer(correctedClassification.select(['classification_2023']), vis, 'Corrected classification');
+Map.addLayer(correctedClassification, vis, 'Corrected classification');
 print('Output classification', correctedClassification);
 
 // Export as GEE asset
