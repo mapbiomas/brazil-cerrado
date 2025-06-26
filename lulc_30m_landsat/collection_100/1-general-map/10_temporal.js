@@ -1,5 +1,4 @@
 // --- --- --- 10_temporal
-
 // Apply a temporal consistency filter to land use land cover classification maps,
 // correcting short-term spurious transitions and stabilizing the first and last years 
 // of the time series (1985–2024). This includes the removal of implausible class changes, 
