@@ -1,10 +1,9 @@
 // --- --- --- 01_trainingMask
-/* 
-Generate training mask based on stable pixels from MapBiomas Collection 9.0, reference maps, and GEDI data
-This script generates a training mask for the Cerrado biome by selecting stable pixels from MapBiomas Collection 9.0 and 
-refining them using deforestation alerts, reference maps, and canopy height data (GEDI). 
-The output is a reliable base for training classification algorithms.
-*/
+// Generate training mask based on stable pixels from MapBiomas Collection 9.0, reference maps, and GEDI data
+// This script generates a training mask for the Cerrado biome by selecting stable pixels from MapBiomas Collection 9.0 and 
+// refining them using deforestation alerts, reference maps, and canopy height data (GEDI). 
+// The output is a reliable base for training classification algorithms.
+
 // Author: barbara.silva@ipam.org.br
 
 // Define the Cerrado extent for export
