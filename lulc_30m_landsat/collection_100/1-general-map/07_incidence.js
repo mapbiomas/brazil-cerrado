@@ -19,7 +19,7 @@ var out = 'projects/mapbiomas-workspace/COLECAO_DEV/COLECAO10_DEV/CERRADO/LANDSA
 
 // Define input/output metadata
 var inputVersion = '11';
-var outputVersion = '5';
+var outputVersion = '4';
 var thresholdEvents = 14;
 
 // Define input file
