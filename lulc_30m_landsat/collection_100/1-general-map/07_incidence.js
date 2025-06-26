@@ -1,5 +1,4 @@
 // -- -- -- -- 07_incidence
-
 // Apply a temporal consistency filter to remove spurious land cover transitions
 // using the number of transitions, connectivity analysis, and mode-based correction.
 
