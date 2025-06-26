@@ -1,32 +1,34 @@
 // -- -- -- -- 06_gapFill
-// post-processing filter: fill gaps (nodata) with data from previous years
-// barbara.silva@ipam.org.br and dhemerson.costa@ipam.org.br
 
-// Import mapbiomas color schema 
+// Temporal gap-filling of classification maps using previous and next valid years
+// Description: This script applies a temporal gap-filling filter to a time series of classified images (1985–2024), 
+// filling NoData pixels using valid observations from previous or subsequent years.
+
+// Author: barbara.silva@ipam.org.br
+
+// Import MapBiomas color palette
 var vis = {
     min: 0,
     max: 62,
     palette:require('users/mapbiomas/modules:Palettes.js').get('classification8')
 };
 
-// Set the Cerrado biome extent 
+// Define the target geometry (Cerrado biome extent) 
 var geometry = ee.Geometry.Polygon(
       [[[-61.23436115564828, -1.2109638051779688],
         [-61.23436115564828, -26.098552002927054],
         [-40.31639240564828, -26.098552002927054],
         [-40.31639240564828, -1.2109638051779688]]], null, false);
 
-// Set root directory
-var out = 'projects/mapbiomas-workspace/COLECAO_DEV/COLECAO9_DEV/CERRADO/C9-GENERAL-POST/';
+// Define input/output metadata
+var out = 'projects/mapbiomas-workspace/COLECAO_DEV/COLECAO10_DEV/CERRADO/LANDSAT/C10-POST-CLASSIFICATION/';
+var inputVersion = '11';
+var outputVersion = '11';
 
-// Set metadata
-var inputVersion = '8';
-var outputVersion = '8';
+// Load classified image collection
+var data = ee.ImageCollection('projects/mapbiomas-workspace/COLECAO_DEV/COLECAO10_DEV/CERRADO/LANDSAT/C10-GENERAL-MAP-PROBABILITY');
 
-// Set input classification
-var data = ee.ImageCollection('projects/mapbiomas-workspace/COLECAO_DEV/COLECAO9_DEV/CERRADO/C9-GENERAL-MAP-PROBABILITY');
-
-// Function to build collection as ee.Image
+// Build classification time series from image collectio
 var buildCollection = function(input, version, startYear, endYear) {
   var years = ee.List.sequence({'start': startYear, 'end': endYear}).getInfo();
   var collection = ee.Image([]);
@@ -44,118 +46,84 @@ var buildCollection = function(input, version, startYear, endYear) {
   return collection;
 };
 
-var collection = buildCollection(
-  data,             // input collection
-  inputVersion,     // version 
-  1985,             // startYear
-  2023);            // endyear
+var collection = buildCollection(data, inputVersion, 1985, 2024);
 
-// Discard zero pixels in the image
+// Remove zero-class pixels
 var classificationInput = collection.mask(collection.neq(0));
-print('Input classification', classificationInput);
-Map.addLayer(classificationInput.select(['classification_1986']), vis, 'Input classification');
+print ('Input classification', classificationInput);
+Map.addLayer(classificationInput.select('classification_2023'), vis, 'Input classification');
 
-// Set the list of years to be filtered
-var years = ee.List.sequence({'start': 1985, 'end': 2023, step: 1}).getInfo();
+// List of years
+var years = ee.List.sequence(1985, 2024).getInfo();
 
-// User defined functions
-var applyGapFill = function (image) {
+// Create list of band names
+var bandNames = ee.List(
+  years.map(function(year) {
+    return 'classification_' + String(year);
+  })
+);
 
-    // apply the gapfill from t0 until tn
-    var imageFilledt0tn = bandNames.slice(1)
-        .iterate(
-            function (bandName, previousImage) {
+// Generate dictionary with occurrence info for each band
+var bandsOccurrence = ee.Dictionary(
+  bandNames.cat(classificationInput.bandNames()).reduce(ee.Reducer.frequencyHistogram())
+);
 
-                var currentImage = image.select(ee.String(bandName));
+// Create dictionary with valid or masked bands
+var bandsDictionary = bandsOccurrence.map(function(key, value) {
+  return ee.Image(
+    ee.Algorithms.If(
+      ee.Number(value).eq(2),
+      classificationInput.select([key]).byte(),
+      ee.Image().rename([key]).byte().updateMask(classificationInput.select(0))
+    )
+  );
+});
 
-                previousImage = ee.Image(previousImage);
+// Assemble full image from dictionary
+var imageAllBands = ee.Image(
+  bandNames.iterate(function(band, img) {
+    return ee.Image(img).addBands(bandsDictionary.get(ee.String(band)));
+  }, ee.Image().select())
+);
 
-                currentImage = currentImage.unmask(
-                    previousImage.select([0]));
 
-                return currentImage.addBands(previousImage);
+// Gap-fill function: forward then backward
+var applyGapFill = function(image) {
+  // Forward fill (t0 → tn)
+  var imageFilled_t0tn = bandNames.slice(1).iterate(function(band, previousImage) {
+    var curr = image.select(ee.String(band));
+    previousImage = ee.Image(previousImage);
+    var filled = curr.unmask(previousImage.select(0));
+    return filled.addBands(previousImage);
+  }, ee.Image(imageAllBands.select([bandNames.get(0)])));
+  imageFilled_t0tn = ee.Image(imageFilled_t0tn);
 
-            }, ee.Image(imageAllBands.select([bandNames.get(0)]))
-        );
+  // Backward fill (tn → t0)
+  var reversed = bandNames.reverse();
+  var imageFilled_tnt0 = reversed.slice(1).iterate(function(band, previousImage) {
+    var curr = imageFilled_t0tn.select(ee.String(band));
+    previousImage = ee.Image(previousImage);
+    var filled = curr.unmask(previousImage.select(previousImage.bandNames().length().subtract(1)));
+    return previousImage.addBands(filled);
+  }, ee.Image(imageFilled_t0tn.select([reversed.get(0)])));
 
-    imageFilledt0tn = ee.Image(imageFilledt0tn);
-
-    // apply the gapfill from tn until t0
-    var bandNamesReversed = bandNames.reverse();
-
-    var imageFilledtnt0 = bandNamesReversed.slice(1)
-        .iterate(
-            function (bandName, previousImage) {
-
-                var currentImage = imageFilledt0tn.select(ee.String(bandName));
-
-                previousImage = ee.Image(previousImage);
-
-                currentImage = currentImage.unmask(
-                                previousImage.select(previousImage.bandNames().length().subtract(1)));
-
-                return previousImage.addBands(currentImage);
-
-            }, ee.Image(imageFilledt0tn.select([bandNamesReversed.get(0)]))
-        );
-
-    imageFilledtnt0 = ee.Image(imageFilledtnt0).select(bandNames);
-
-    return imageFilledtnt0;
+  return ee.Image(imageFilled_tnt0).select(bandNames);
 };
 
-// Get band names list 
-var bandNames = ee.List(
-    years.map(
-        function (year) {
-            return 'classification_' + String(year);
-        }
-    )
-);
+// Apply gap-filling
+var imageFilled = applyGapFill(imageAllBands);
 
-// Generate a histogram dictionary of [bandNames, image.bandNames()]
-var bandsOccurrence = ee.Dictionary(
-    bandNames.cat(classificationInput.bandNames()).reduce(ee.Reducer.frequencyHistogram())
-);
+Map.addLayer(imageFilled.select('classification_2023'), vis, 'Output classification');
 
-// Insert a masked band 
-var bandsDictionary = bandsOccurrence.map(
-    function (key, value) {
-        return ee.Image(
-            ee.Algorithms.If(
-                ee.Number(value).eq(2),
-                classificationInput.select([key]).byte(),
-                ee.Image().rename([key]).byte().updateMask(classificationInput.select(0))
-            )
-        );
-    }
-);
-
-// Convert dictionary to image
-var imageAllBands = ee.Image(
-    bandNames.iterate(
-        function (band, image) {
-            return ee.Image(image).addBands(bandsDictionary.get(ee.String(band)));
-        },
-        ee.Image().select()
-    )
-);
-
-// Apply the gapfill function
-var imageFilledtnt0 = applyGapFill(imageAllBands);
-
-// Check filtered image
-print('Output classification', imageFilledtnt0);
-Map.addLayer(imageFilledtnt0.select('classification_2022'), vis, 'filtered');
-
-// Write metadata
-imageFilledtnt0 = imageFilledtnt0.set('version', outputVersion);
+// Add metadata
+imageFilled = imageFilled.set('version', outputVersion);
+print('Output classification', imageFilled);
 
 // Export as GEE asset
 Export.image.toAsset({
-    'image': imageFilledtnt0,
-    'description': 'CERRADO_col9_gapfill_v' + outputVersion,
-    'assetId': out + 'CERRADO_col9_gapfill_v' + outputVersion,
+    'image': imageFilled,
+    'description': 'CERRADO_C10_gapfill_v' + outputVersion,
+    'assetId': out + 'CERRADO_C10_gapfill_v' + outputVersion,
     'pyramidingPolicy': {
         '.default': 'mode'
     },
