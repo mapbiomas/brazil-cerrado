@@ -1,5 +1,4 @@
 // -- -- -- -- 13_spatial
-
 // Post-processing filter to remove isolated or edge pixels in classified images (minimum area: 6 pixels)
 
 // Author: barbara.silva@ipam.org.br
