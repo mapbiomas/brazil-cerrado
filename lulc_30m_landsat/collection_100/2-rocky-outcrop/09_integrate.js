@@ -1,9 +1,7 @@
 // --- --- --- 09_integration
-
-/* Integrates native vegetation classification with rocky outcrop classification
-This script integrates the rocky outcrop classification into the final native vegetation classification. 
-It ensures spatial consistency and applies post-integration corrections, including adjustments to grassland (class 12) and forest formation (class 3) to maintain temporal coherence
-*/
+// Integrates native vegetation classification with rocky outcrop classification
+// This script integrates the rocky outcrop classification into the final native vegetation classification. 
+// It ensures spatial consistency and applies post-integration corrections, including adjustments to grassland (class 12) and forest formation (class 3) to maintain temporal coherence
 
 // Author: barbara.silva@ipam.org.br
 
