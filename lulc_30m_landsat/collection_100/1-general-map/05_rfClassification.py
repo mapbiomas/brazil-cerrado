@@ -1,5 +1,4 @@
 # --- --- --- 05_rfClassification
-
 # Perform land use and land cover classification using Random Forest (RF) with multiprobability output
 # Applies trained RF model to annual Landsat mosaics and exports classification and class probabilities
 
