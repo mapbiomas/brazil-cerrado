@@ -1,5 +1,6 @@
 // --- --- --- 08_spatial
 // Apply spatial filter to remove small patches (minimum area filter)
+
 // Author: barbara.silva@ipam.org.br
 
 // Set input/output versions
