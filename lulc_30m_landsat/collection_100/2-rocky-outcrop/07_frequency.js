@@ -1,10 +1,7 @@
 // --- --- --- 07_frequency
-
-/*
-Apply a frequency filter to reinforce stable rocky outcrop areas
-Description: This script applies a temporal frequency filter to the classification series (1985–2024),
-marking as rocky outcrop (class 29) only the pixels where class 29 appears in at least 90% of the years. 
-*/
+// Apply a frequency filter to reinforce stable rocky outcrop areas
+// Description: This script applies a temporal frequency filter to the classification series (1985–2024),
+// marking as rocky outcrop (class 29) only the pixels where class 29 appears in at least 90% of the years. 
 
 // Author: barbara.silva@ipam.org.br
 
