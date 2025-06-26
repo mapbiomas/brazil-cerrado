@@ -1,8 +1,8 @@
 // --- --- --- 03_samplePoints
-/* Generate spatially stratified training points per region based on stable pixels
-This script generates spatially stratified sample points by ecoregion using stable pixels from MapBiomas Collection 9.0. 
-It allocates samples proportionally to the area of each land cover class per region, while enforcing a minimum number of samples per class.
-*/
+// Generate spatially stratified training points per region based on stable pixels
+// This script generates spatially stratified sample points by ecoregion using stable pixels from MapBiomas Collection 9.0. 
+// It allocates samples proportionally to the area of each land cover class per region, while enforcing a minimum number of samples per class.
+
 // Author: barbara.silva@ipam.org.br
 
 // Define output path and version
