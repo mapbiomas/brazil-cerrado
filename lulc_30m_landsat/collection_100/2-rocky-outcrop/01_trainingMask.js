@@ -1,10 +1,7 @@
 // --- --- --- 01_trainingMask
-
-/*
-Generate a training mask based on stable pixels from MapBiomas Collection
-Description: This script generates a training mask for the rocky outcrop class based on stable pixels from MapBiomas Collection 9.0 (1985–2023). 
-It blends classifications from Collection 9.0 and 10.0, detects stable pixels over time, and exports the result as a GEE asset.
-*/
+// Generate a training mask based on stable pixels from MapBiomas Collection
+// Description: This script generates a training mask for the rocky outcrop class based on stable pixels from MapBiomas Collection 9.0 (1985–2023). 
+// It blends classifications from Collection 9.0 and 10.0, detects stable pixels over time, and exports the result as a GEE asset.
 
 // Author: barbara.silva@ipam.org.br
 
