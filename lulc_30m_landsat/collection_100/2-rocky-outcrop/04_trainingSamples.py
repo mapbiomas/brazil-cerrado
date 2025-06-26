@@ -1,5 +1,4 @@
 ## --- --- --- 04_getSignatures
-
 # Generate annual training samples using Landsat mosaics and pre-defined points
 # Description: This script generates annual training samples for the rocky outcrop class by producing custom Landsat mosaics, 
 # applying spectral and geomorphometric metrics, and sampling stratified points using pre-defined training locations.
