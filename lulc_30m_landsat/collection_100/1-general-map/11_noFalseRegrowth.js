@@ -34,11 +34,11 @@ Map.addLayer(classificationInput, vis, 'Input classification');
 // ----------------------------------------------------
 
 // Set number of years to consider for anthropic stability (7 years)
-var x = 7;
+var x = 15;
 
 // Create padding bands to ensure time window availability
 var exedent_bands = classificationInput.slice(0, (x - 1)).multiply(0)
-  .rename(['b1', 'b2', 'b3', 'b4', 'b5', 'b6']);
+  .rename(['b1', 'b2', 'b3', 'b4', 'b5', 'b6', 'b7', 'b8', 'b9', 'b10', 'b11', 'b12', 'b13', 'b14']);
   
 // Iterate over bands to replace forest regrowth with class 21 when condition is met
 var processedClassification = classificationInput.bandNames().slice(1).iterate(function(current, previous) {
