@@ -1,0 +1,87 @@
+// --- --- --- 07a_spectral-sandveg
+// Extraction of spectral signatures from Restinga and Non-Restinga areas
+// barbara.silva@ipam.org.br, dhemerson.costa@ipam.org.br and ana.souza@ipam.org.br
+
+// Input sandbank vegetation data
+var sandbank = ee.FeatureCollection ('projects/ee-ipam-cerrado/assets/ancillary/COL03_samples_sandvegetation');
+var no_sandbank = ee.FeatureCollection ('projects/ee-ipam-cerrado/assets/ancillary/COL03_samples_no-sandvegetation');
+
+// Output directory
+var out = 'projects/mapbiomas-workspace/COLECAO_DEV/COLECAO10_DEV/CERRADO/SENTINEL/trainings/restinga/';
+ 
+// Number of samples per class
+// Values to balance the training dataset
+var j_sandbank = 170;      // Number of Restinga samples (class 50)
+var j_no_sandbank = 346;     // Number of Non-Restinga samples
+var seed = 123;               // Fixed seed for reproducibility
+
+// Generates random points inside a polygon FeatureCollection and assigns a class label to each point
+function generatePoints(polyFC, nPoints, classValue) {
+
+  var pts = ee.FeatureCollection.randomPoints({
+    region: polyFC.geometry(),
+    points: nPoints,
+    seed: seed,
+    maxError: 1
+  });
+  
+   // Assign class label to each point
+  return pts.map(function(f){
+    return f.set('class', classValue);
+  });
+}
+
+var pts_sandveg = generatePoints(sandbank, j_sandbank, 50);
+var pts_no_sandveg = generatePoints(no_sandbank, j_no_sandbank, 3);
+
+// Merge all training points
+var trainPoints = pts_sandveg.merge(pts_no_sandveg);
+
+// Quick checks and visualization
+print('Total number of generated points:', trainPoints.size());
+Map.addLayer(trainPoints, {}, 'Random Training Points');
+
+// Convert training polygons into a raster image with class values
+var trainPolys = restinga.map(function(f){ return f.set('class',50); })
+  .merge(nao_restinga.map(function(f){ return f.set('class',3); }));
+
+var sampleImg = trainPolys.reduceToImage({
+  properties: ['class'],
+  reducer: ee.Reducer.first()
+}).rename('class');
+
+Map.addLayer(sampleImg, {}, "Sample Image");
+
+// The same spatial samples are associated with multiple years to support time-series or multi-year training strategies
+var years = [
+  2017, 2018, 2019, 2020,
+  2021, 2022, 2023, 2024
+];
+
+var trainedSamplesAllYears = ee.FeatureCollection([]);
+
+years.forEach(function(year) {
+
+  var samples = sampleImg.sampleRegions({
+    collection: trainPoints,
+    scale: 30,
+    geometries: true
+  })
+  .map(function(f) {
+    return f.set('year', year);
+  });
+
+  trainedSamplesAllYears = trainedSamplesAllYears.merge(samples);
+});
+
+print('Number of points in 2024:', trainedSamplesAllYears.filter(ee.Filter.eq('year', 2024)).size());
+print('Sample preview:', trainedSamplesAllYears.limit(10));
+
+Map.addLayer(trainedSamplesAllYears, {}, 'Training Samples (All Years)');
+
+// Export as GEE asset
+Export.table.toAsset({
+  collection: trainedSamplesAllYears,
+  description: 'train_col03_restinga_all_years_v0',
+  assetId: out + 'train_col03_restinga_all_years_v0'
+});
