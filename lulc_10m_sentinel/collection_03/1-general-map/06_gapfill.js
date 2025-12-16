@@ -1,16 +1,16 @@
 // -- -- -- -- 06_gapFill
 // post-processing filter: fill the gaps (nodata) with data from previous years
-// barbara.silva@ipam.org.br and dhemerson.costa@ipam.org.br
+// barbara.silva@ipam.org.br, dhemerson.costa@ipam.org.br and ana.souza@ipam.org.br
 
-// Import mapbiomas color schema 
+// Import MapBiomas color schema 
 var vis = {
     min: 0,
     max: 62,
     palette:require('users/mapbiomas/modules:Palettes.js').get('classification8'),
-    bands: 'classification_2017'
+    bands: 'classification_2020'
 };
 
-// Set the Cerrado biome extent 
+// Set the cerrado biome extent 
 var geometry = ee.Geometry.Polygon(
       [[[-61.23436115564828, -1.2109638051779688],
         [-61.23436115564828, -26.098552002927054],
@@ -18,16 +18,16 @@ var geometry = ee.Geometry.Polygon(
         [-40.31639240564828, -1.2109638051779688]]], null, false);
 
 // Set root directory
-var out = 'projects/mapbiomas-workspace/COLECAO_DEV/COLECAO9_DEV/CERRADO/SENTINEL-GENERAL-POST/';
+var out = 'projects/mapbiomas-workspace/COLECAO_DEV/COLECAO10_DEV/CERRADO/SENTINEL/C03-POST-CLASSIFICATION/';
 
 // Set metadata
-var inputVersion = '10';
-var outputVersion = '10';
+var inputVersion = '9';
+var outputVersion = '9';
 
 // Set input classification
-var data = ee.ImageCollection('projects/mapbiomas-workspace/COLECAO_DEV/COLECAO9_DEV/CERRADO/SENTINEL_DEV/generalMap');
+var data = ee.ImageCollection('projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_10/SENTINEL/C03_GENERAL-MAP-PROBABILITY');
 
-// Function to build collection as ee.Image
+// Function to build a collection as ee.Image
 var buildCollection = function(input, version, startYear, endYear) {
   var years = ee.List.sequence({'start': startYear, 'end': endYear}).getInfo();
   var collection = ee.Image([]);
@@ -48,8 +48,8 @@ var buildCollection = function(input, version, startYear, endYear) {
 var collection = buildCollection(
   data,             // input collection
   inputVersion,     // version 
-  2016,             // startYear
-  2023);            // endyear
+  2017,             // startYear
+  2024);            // endyear
 
 // Discard zero pixels in the image
 var classificationInput = collection.mask(collection.neq(0));
@@ -57,12 +57,12 @@ print('Input classification', classificationInput);
 Map.addLayer(classificationInput, vis, 'Input classification');
 
 // Set the list of years to be filtered
-var years = ee.List.sequence({'start': 2016, 'end': 2023, step: 1}).getInfo();
+var years = ee.List.sequence({'start': 2017, 'end': 2024, step: 1}).getInfo();
 
-// User defined functions
+//User-defined functions
 var applyGapFill = function (image) {
 
-    // apply the gapfill from t0 until tn
+    // apply the gapfill form t0 until tn
     var imageFilledt0tn = bandNames.slice(1)
         .iterate(
             function (bandName, previousImage) {
@@ -132,7 +132,7 @@ var bandsDictionary = bandsOccurrence.map(
     }
 );
 
-// Convert dictionary to image
+// Insert a masked band 
 var imageAllBands = ee.Image(
     bandNames.iterate(
         function (band, image) {
@@ -146,20 +146,15 @@ var imageAllBands = ee.Image(
 var imageFilledtnt0 = applyGapFill(imageAllBands);
 
 // Check filtered image
-Map.addLayer(imageFilledtnt0, vis, 'filtered');
-
-// Write metadata
-imageFilledtnt0 = imageFilledtnt0.set('1-gapfill', outputVersion);
-print('Output classification', imageFilledtnt0);
+Map.addLayer(imageFilledtnt0, vis, 'Filtered classification');
+print('Filtered classification', imageFilledtnt0);
 
 // Export as GEE asset
 Export.image.toAsset({
     'image': imageFilledtnt0,
-    'description': 'CERRADO_S2-C1_gapfill_v' + outputVersion,
-    'assetId': out + 'CERRADO_S2-C1_gapfill_v' + outputVersion,
-    'pyramidingPolicy': {
-        '.default': 'mode'
-    },
+    'description': 'CERRADO_C03_gapfill_v' + outputVersion,
+    'assetId': out + 'CERRADO_C03_gapfill_v' + outputVersion,
+    'pyramidingPolicy': {'.default': 'mode'},
     'region': geometry,
     'scale': 10,
     'maxPixels': 1e13
