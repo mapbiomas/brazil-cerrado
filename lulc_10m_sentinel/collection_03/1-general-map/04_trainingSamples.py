@@ -75,7 +75,7 @@ biomes = ['CERRADO'];
 # Initialize dictionary to store mosaics by year
 mosaic_dict = {}
 
- Generate and export training samples per year and region
+# Generate and export training samples per year and region
 for obj in missing:
     print(obj)
 
@@ -213,7 +213,7 @@ for obj in missing:
     # Apply the spectral index calculations to the mosaic
     mosaic = apply_indices_all_suffixes(mosaic)
 
-    # # This includes satellite embedding data, and calculated latitude/longitude sine/cosine
+    # This includes satellite embedding data, and calculated latitude/longitude sine/cosine
     mosaic = mosaic.addBands(emb_mosaic).addBands(lat).addBands(lon_sin).addBands(lon_cos)
 
     for key in geomorpho:
