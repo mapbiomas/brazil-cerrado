@@ -1,5 +1,5 @@
 // -- -- -- -- 10_falseRegrowth
-// Temporal post-classification filters to remove false regrowth signals (native vegetation) in annual LULC maps
+// post-processing filter: temporal post-classification filters to remove false regrowth signals (native vegetation) in annual LULC maps
 // barbara.silva@ipam.org.br, dhemerson.costa@ipam.org.br and ana.souza@ipam.org.br
 
 // Import mapbiomas color schema 
