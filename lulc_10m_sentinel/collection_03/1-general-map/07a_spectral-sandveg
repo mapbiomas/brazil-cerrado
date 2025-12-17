@@ -1,5 +1,5 @@
 // --- --- --- 07a_spectral-sandveg
-// Extraction of spectral signatures from Restinga and Non-Restinga areas
+// post-processing filter: extraction of spectral signatures from Restinga and Non-Restinga areas
 // barbara.silva@ipam.org.br, dhemerson.costa@ipam.org.br and ana.souza@ipam.org.br
 
 // Input sandbank vegetation data
