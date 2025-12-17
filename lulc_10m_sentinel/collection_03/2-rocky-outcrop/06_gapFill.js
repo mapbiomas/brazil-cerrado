@@ -2,50 +2,49 @@
 // post-processing filter: fill gaps (nodata) with data from previous years
 // barbara.silva@ipam.org.br
 
-// Import Mapbiomas color schema 
+// Import mapbiomas color schema 
 var vis = {
     min: 0,
     max: 62,
-    palette:require('users/mapbiomas/modules:Palettes.js').get('classification8'),
-    bands: 'classification_2023'
+    palette:require('users/mapbiomas/modules:Palettes.js').get('classification8')
 };
 
 // Set the rocky outcrop extent 
 var geometry = ee.Geometry.Polygon (
 [[
-[-41.89424073899461,-3.5402242777700574],
-[-48.83760011399461,-6.385663504252147],
-[-48.96943605149461,-10.557420640233374],
-[-50.81513917649461,-13.906814250754953],
-[-58.68135011399461,-14.503234080476853],
-[-58.50556886399461,-22.293613049106106],
-[-55.78095948899461,-22.374910342856523],
-[-53.18818605149461,-18.463398351122954],
-[-49.36494386399461,-17.92066736932659],
-[-51.25193743299323,-24.41630980864504],
-[-51.07881105149461,-26.06116808540473],
-[-42.64131105149461,-19.99858562581205],
-[-41.76240480149461,-13.821484186840916],
-[-42.07002198899461,-12.666540189072778],
-[-43.08076417649461,-8.998421853698893],
-[-43.192266274702234,-8.357590785527188],
-[-43.83007584726284,-7.933765648854686],
-[-45.10224855149461,-7.214743125944735],
-[-40.26826417649461,-5.336504449649562],
-[-41.05927980149461,-3.1015101677947055],
-[-41.89424073899461,-3.5402242777700574]
+[-42.27876222336961,-3.611496375227711],
+[-48.66181886399461,-6.385663504252142],
+[-48.793654801494604,-10.557420640233373],
+[-50.639357926494604,-13.90681425075495],
+[-58.505568863994604,-14.503234080476853],
+[-58.32978761399461,-22.29361304910609],
+[-55.60517823899462,-22.37491034285652],
+[-53.012404801494604,-18.463398351122947],
+[-49.18916261399461,-17.920667369326587],
+[-51.07615618299322,-24.41630980864504],
+[-50.90302980149462,-26.061168085404727],
+[-42.46552980149461,-19.998585625812044],
+[-41.586623551494604,-13.82148418684091],
+[-41.89424073899462,-12.666540189072775],
+[-42.904982926494604,-8.99842185369889],
+[-43.01648502470223,-8.357590785527185],
+[-42.70947037851284,-8.102388953783956],
+[-40.83955323899461,-7.563385598862326],
+[-40.09248292649461,-5.336504449649559],
+[-40.88349855149462,-3.1015101677947023],
+[-42.04255616868211,-3.3373432698164387],
+[-42.27876222336961,-3.611496375227711]
 ]]);
 
 // Set root directory
-var out = 'projects/mapbiomas-workspace/COLECAO_DEV/COLECAO9_DEV/CERRADO/SENTINEL-ROCKY-POST/';
-var filename = 'CERRADO_col2_rocky_gapfill_v';
+var out = 'projects/ee-barbarasilvaipam/assets/collection-03_rocky-outcrop/post-classification/';
+var filename = 'CERRADO_C02_rocky_gapfill_v';
 
-// Set metadata 
+// set metadata 
 var inputVersion = '1';
 var outputVersion = '1';
 
-// Set input classification
-var data = ee.ImageCollection('projects/mapbiomas-workspace/COLECAO_DEV/COLECAO9_DEV/CERRADO/SENTINEL_DEV/generalMap_rocky');
+var data = ee.ImageCollection('projects/mapbiomas-workspace/COLECAO_DEV/COLECAO10_DEV/CERRADO/SENTINEL/C03_ROCKY-MAP-PROBABILITY');
 
 // Function to build collection as ee.Image
 var buildCollection = function(input, version, startYear, endYear) {
@@ -68,21 +67,21 @@ var buildCollection = function(input, version, startYear, endYear) {
 var collection = buildCollection(
   data,             // input collection
   inputVersion,     // version 
-  2016,             // startYear
-  2023);            // endyear
+  2017,             // startYear
+  2024);            // endyear
 
 // Discard zero pixels in the image
 var classificationInput = collection.mask(collection.neq(0));
 print('Input classification', classificationInput);
-Map.addLayer(classificationInput, vis, 'input');
+Map.addLayer(classificationInput.select(['classification_2023']), vis, 'input');
 
-// Set the list of years to be filtered
-var years = ee.List.sequence({'start': 2016, 'end': 2023, step: 1}).getInfo();
+// set the list of years to be filtered
+var years = ee.List.sequence({'start': 2017, 'end': 2024, step: 1}).getInfo();
 
 // User defined functions
 var applyGapFill = function (image) {
 
-    // Apply the gapfill from t0 until tn
+    // apply the gapfill from t0 until tn
     var imageFilledt0tn = bandNames.slice(1)
         .iterate(
             function (bandName, previousImage) {
@@ -101,7 +100,7 @@ var applyGapFill = function (image) {
 
     imageFilledt0tn = ee.Image(imageFilledt0tn);
 
-    // Apply the gapfill from tn until t0
+    // apply the gapfill from tn until t0
     var bandNamesReversed = bandNames.reverse();
 
     var imageFilledtnt0 = bandNamesReversed.slice(1)
@@ -162,12 +161,18 @@ var imageAllBands = ee.Image(
     )
 );
 
+// Generate image pixel years
+var imagePixelYear = ee.Image.constant(years)
+    .updateMask(imageAllBands)
+    .rename(bandNames);
+
 // Apply the gapfill
 var imageFilledtnt0 = applyGapFill(imageAllBands);
+var imageFilledYear = applyGapFill(imagePixelYear);
 
 // Check filtered image
-print ('Output classification', imageFilledtnt0);
-Map.addLayer(imageFilledtnt0, vis, 'filtered');
+print ('output classification', imageFilledtnt0);
+Map.addLayer(imageFilledtnt0.select('classification_2023'), vis, 'filtered');
 
 // Write metadata
 imageFilledtnt0 = imageFilledtnt0.set('version', outputVersion);
@@ -177,9 +182,7 @@ Export.image.toAsset({
     'image': imageFilledtnt0,
     'description': filename + outputVersion,
     'assetId': out + filename + outputVersion,
-    'pyramidingPolicy': {
-        '.default': 'mode'
-    },
+    'pyramidingPolicy': {'.default': 'mode'},
     'region': geometry,
     'scale': 10,
     'maxPixels': 1e13,
