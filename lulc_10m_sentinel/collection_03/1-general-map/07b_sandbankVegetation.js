@@ -1,5 +1,5 @@
 // --- --- --- 07b_sandbankVegetation
-// Identify and classify Herbaceous Sandbank Vegetation (Restinga Herbácea) using satellite embeddings and ecological constraints
+// post-processing filter: identify and classify Herbaceous Sandbank Vegetation (Restinga Herbácea) using satellite embeddings and ecological constraints
 // barbara.silva@ipam.org.br, dhemerson.costa@ipam.org.br and ana.souza@ipam.org.br
 
 // Import MapBiomas color palette
