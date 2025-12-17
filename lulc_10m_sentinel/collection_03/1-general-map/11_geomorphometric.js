@@ -1,4 +1,4 @@
-// -- -- -- -- 10_geomorphometric
+// -- -- -- -- 11_geomorphometric
 // post-processing filter: geomorphometric post-classification filters based on slope thresholds to correct wetlands and water classes in annual classifications
 // barbara.silva@ipam.org.br, dhemerson.costa@ipam.org.br and ana.souza@ipam.org.br
 
