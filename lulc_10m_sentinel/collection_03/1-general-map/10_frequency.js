@@ -1,25 +1,25 @@
-// -- -- -- -- 10_frequency
-// post-processing filter: stabilize areas of native vegetation that have remained for at least 85% of the data time series
-// barbara.silva@ipam.org.br and dhemerson.costa@ipam.org.br
+// -- -- -- -- 08_frequency
+// post-processing filter: stabilize areas of native vegetation that have remained for at least 90% of the data time series
+// barbara.silva@ipam.org.br, dhemerson.costa@ipam.org.br and ana.souza@ipam.org.br
 
 // Import mapbiomas color schema 
 var vis = {
     min: 0,
     max: 62,
     palette:require('users/mapbiomas/modules:Palettes.js').get('classification8'),
-    bands: 'classification_2017'
+    bands: 'classification_2024'
 };
 
 // Set root directory 
-var root = 'projects/mapbiomas-workspace/COLECAO_DEV/COLECAO9_DEV/CERRADO/SENTINEL-GENERAL-POST/';
-var out = 'projects/mapbiomas-workspace/COLECAO_DEV/COLECAO9_DEV/CERRADO/SENTINEL-GENERAL-POST/';
+var root = 'projects/mapbiomas-workspace/COLECAO_DEV/COLECAO10_DEV/CERRADO/SENTINEL/C03-POST-CLASSIFICATION/';
+var out = 'projects/mapbiomas-workspace/COLECAO_DEV/COLECAO10_DEV/CERRADO/SENTINEL/C03-POST-CLASSIFICATION/';
 
 // Set metadata
-var inputVersion = '10';
-var outputVersion = '6';
+var inputVersion = '4';
+var outputVersion = '7';
 
 // Define input file
-var inputFile = 'CERRADO_S2-C1_gapfill_v10_segmentation_v'+inputVersion;
+var inputFile = 'CERRADO_C03_gapfill_v9_sandveg_v'+inputVersion;
 
 // Load classification
 var classification = ee.Image(root + inputFile);
@@ -36,19 +36,22 @@ var filterFreq = function(image) {
   var savanna = image.eq(4).expression(exp);
   var wetland = image.eq(11).expression(exp);
   var grassland = image.eq(12).expression(exp);
+  var sandveg = image.eq(50).expression(exp);
 
   // Select pixels that were native vegetation in at least 85% of the time series
   var stable_native = ee.Image(0).where(forest
                                    .add(savanna)
                                    .add(wetland)
                                    .add(grassland)
-                                   .gte(85), 1);
+                                   .add(sandveg)
+                                   .gte(90), 1);
                                    
   // Stabilize native class when:
-  var filtered = ee.Image(0).where(stable_native.eq(1).and(forest.gte(70)), 3)      // needs to occur at least 5 years
-                            .where(stable_native.eq(1).and(wetland.gte(85)), 11)    // needs to occur at least 6 years
-                            .where(stable_native.eq(1).and(savanna.gt(40)), 4)      // needs to occur at least 3 years
-                            .where(stable_native.eq(1).and(grassland.gt(50)), 12);  // needs to occur at least 4 years
+  var filtered = ee.Image(0).where(stable_native.eq(1).and(forest.gte(70)), 3)     // needs to occur at least 6 years
+                            .where(stable_native.eq(1).and(wetland.gte(95)), 11)   // needs to occur at least 8 years
+                            .where(stable_native.eq(1).and(savanna.gt(60)), 4)     // needs to occur at least 5 years
+                            .where(stable_native.eq(1).and(grassland.gt(40)), 12)  // needs to occur at least 3 years
+                            .where(stable_native.eq(1).and(sandveg.gt(40)), 50);   // needs to occur at least 3 years
 
   // Get only pixels to be filtered
   filtered = filtered.updateMask(filtered.neq(0));
@@ -59,12 +62,8 @@ var filterFreq = function(image) {
 // Apply function  
 var classification_filtered = filterFreq(classification);
 
-// Check filtered image
 Map.addLayer(classification_filtered, vis, 'filtered');
 
-// Write metadata
-classification_filtered = classification_filtered.set('2-frequency', outputVersion)
-                                                 .copyProperties(classification);
 print('Output classification', classification_filtered);
 
 // Export as GEE asset
