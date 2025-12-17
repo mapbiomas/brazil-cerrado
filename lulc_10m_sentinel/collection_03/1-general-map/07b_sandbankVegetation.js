@@ -10,7 +10,7 @@ var vis = {
   bands: 'classification_2020'
 };
 
-// Classification input/output settings
+// Set metadata
 var inputVersion = '9';
 var outputVersion = '4';
 
