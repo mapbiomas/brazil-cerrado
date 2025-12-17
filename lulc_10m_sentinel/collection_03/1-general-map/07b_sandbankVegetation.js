@@ -13,6 +13,8 @@ var vis = {
 // Classification input/output settings
 var inputVersion = '9';
 var outputVersion = '4';
+
+// Set root directory
 var input = 'projects/mapbiomas-workspace/COLECAO_DEV/COLECAO10_DEV/CERRADO/SENTINEL/C03-POST-CLASSIFICATION/';
 var output = 'projects/mapbiomas-workspace/COLECAO_DEV/COLECAO10_DEV/CERRADO/SENTINEL/C03-POST-CLASSIFICATION/';
 
