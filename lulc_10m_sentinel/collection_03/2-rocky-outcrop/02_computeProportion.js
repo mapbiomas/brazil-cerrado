@@ -7,38 +7,42 @@ var output_version = '1';
 var input_version = '1';
 
 // Define classes to be assessed
-var classes = [1, 2, 29];
+var classes = [1, 2, 3, 4, 5, 29];
 
 // Output directory
-var dirout = 'projects/barbaracosta-ipam/assets/collection-2_rocky_outcrop/sample/area/';
+var dirout = 'projects/ee-barbarasilvaipam/assets/collection-03_rocky-outcrop/sample/area/';
 
 // Read area of interest
-var aoi_vec = ee.FeatureCollection('projects/barbaracosta-ipam/assets/collection-2_rocky_outcrop/masks/aoi_v1').geometry();
-var aoi = ee.Image(1).clip(aoi_vec);
-Map.addLayer (aoi, {palette: ['red']}, "Area of Interest");
+var aoi_vec = ee.FeatureCollection('projects/ee-barbarasilvaipam/assets/collection-03_rocky-outcrop/masks/aoi_v1');
+var aoi_img = ee.Image(1).clip(aoi_vec);
+Map.addLayer(aoi_img, {palette:['red']}, 'Area of Interest');
 
-// Stable pixels from collection 9
-var stable = ee.Image('projects/barbaracosta-ipam/assets/collection-2_rocky_outcrop/masks/cerrado_rockyTrainingMask_2016_2023_v'+input_version);
+// Stable pixels from collection 10.0 (2016-2024)
+var stable = ee.Image('projects/ee-barbarasilvaipam/assets/collection-03_rocky-outcrop/masks/cerrado_rockyTrainingMask_2016_2024_v'+input_version);
+
+var pixel_values = stable.reduceRegion({
+    reducer: ee.Reducer.frequencyHistogram(),
+    geometry: aoi_vec.geometry(),
+    scale: 10,
+    maxPixels: 1e14
+});
+print('Stable pixels Histogram:', pixel_values);
 
 // Random color schema  
 var vis = {
     'min': 1,
     'max': 29,
-    'palette': ["32a65e","FFFFB2", "ffaa5f"]
+    'palette': ["32a65e","2532e4", "d6bc74", "edde8e", "ffaa5f"]
 };
 
 Map.addLayer(stable, vis, 'stable pixels');
 print ('stable', stable);
 
-// Get cerrado biome layer
-var cerrado = ee.FeatureCollection('projects/mapbiomas-workspace/AUXILIAR/biomas-2019')
-                .filterMetadata('Bioma', 'equals', 'Cerrado');
-
 // Define function to compute area (skm)
-var pixelArea = ee.Image.pixelArea().divide(1000000);
+var pixelArea = ee.Image.pixelArea().divide(1000000); //km²
 
-// Define function to get class area 
-// For each region 
+// Define a function to get the class area 
+// For AOI region 
 var getArea = function(feature) {
 
   // Get classification for the region [i]
@@ -55,19 +59,21 @@ var getArea = function(feature) {
                          ee.Number(reference_ij.reduceRegion({
                                       reducer: ee.Reducer.sum(),
                                       geometry: feature.geometry(),
-                                      scale: 30,
+                                      scale: 10,
                                       maxPixels: 1e13,
                                       tileScale: 4}
-                                    ).get('area')
-                                  )
+                                    ).get('area'))
+                                    .multiply(10000)
+                                    .round()
+                                    .divide(10000)
                               ); // End of set
                           }); // End of class_j function
   // Return feature
   return feature;
 }; 
 
-var computed_obj = cerrado.map(getArea);
-print (computed_obj);
+var computed_obj = aoi_vec.map(getArea);
+print ('Result: ', computed_obj);
 
 // Export computation as GEE asset
 Export.table.toAsset({'collection': computed_obj, 
