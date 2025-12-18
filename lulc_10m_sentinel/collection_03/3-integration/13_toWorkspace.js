@@ -1,10 +1,10 @@
-// -- -- -- -- 15_toWorkspace.js
+// -- -- -- -- 13_toWorkspace
 // Export cerrado classification as a multiband image for the integration step
-// barbara.silva@ipam.org.br and dhemerson.costa@ipam.org.br
+// barbara.silva@ipam.org.br, dhemerson.costa@ipam.org.br and ana.souza@ipam.org.br
 
 // Input asset
-var assetInput = 'projects/mapbiomas-workspace/COLECAO_DEV/COLECAO9_DEV/CERRADO/SENTINEL-GENERAL-POST/';
-var fileName = 'CERRADO_col2_native6_rocky2';
+var assetInput = 'projects/mapbiomas-workspace/COLECAO_DEV/COLECAO10_DEV/CERRADO/SENTINEL/C03-POST-CLASSIFICATION/';
+var fileName = 'CERRADO_C03_native3_rocky6_v6';
 
 // Classification input
 var collection = ee.Image(assetInput + fileName);
@@ -14,13 +14,13 @@ print('Input collection', collection);
 Map.addLayer(collection, {}, 'Input data');
 
 // Output asset
-var assetOutput = 'projects/mapbiomas-workspace/COLECAO9-S2/classificacao';
+var assetOutput = 'projects/mapbiomas-brazil/assets/LAND-COVER-10M/COLLECTION-3/GENERAL/classification-cer-ft';
 
 // Output version
-var outputVersion = '7';
+var outputVersion = '6';
 
 // Set the MapBiomas collection launch ID
-var collectionId = 2.0;
+var collectionId = 3.0;
 
 // Define the biome or cross-cutting theme
 var theme = {type: 'biome', name: 'CERRADO'};
@@ -33,8 +33,8 @@ var palette = require('users/mapbiomas/modules:Palettes.js').get('classification
 
 // List of years
 var years = [
-  '2016', '2017', '2018', '2019', 
-  '2020', '2021', '2022', '2023'
+    '2017', '2018', '2019', '2020',
+    '2021', '2022', '2023', '2024'
 ];
 
 // Define the bounding box for Brazil
@@ -48,7 +48,6 @@ var geometry = ee.Geometry.Polygon(
         ]
     ], null, false
 );
-
 
 // Loop through each year
 years.forEach(function(year) {
@@ -78,28 +77,32 @@ years.forEach(function(year) {
     if (theme.type === 'biome') {
         name = theme.name + '-' + name;
     }
-    
+
     // Reclassify the mosaic of uses in Alto Paraguai watershed (BAP) with the Pantanal biome
-    var assetPantanal = ee.Image('projects/mapbiomas-workspace/COLECAO9-S2/classificacao-pant/pant_s2_final_v1');
+    var assetPantanal = ee.Image('projects/mapbiomas-workspace/AMOSTRAS/S2_EMBEDDING/PANTANAL/PANT_colS2Emb_Anual_12');
     var pantanalYear = assetPantanal.select('classification_' + year);
     var bapBoundaries = ee.Image(1).clip(ee.FeatureCollection('projects/barbaracosta-ipam/assets/collection-9/BAP_limit'));
 
     imageYear = imageYear.where(imageYear.eq(21)
         .and(pantanalYear.eq(3))
         .and(bapBoundaries.eq(1)), 4);
-    
-    imageYear = imageYear.where(imageYear.eq(21)
-      .and(pantanalYear.eq(4))
-      .and(bapBoundaries.eq(1)), 4);
 
+    imageYear = imageYear.where(imageYear.eq(21)
+        .and(pantanalYear.eq(4))
+        .and(bapBoundaries.eq(1)), 4);
+        
+    imageYear = imageYear.where(imageYear.eq(21)
+        .and(pantanalYear.eq(11))
+        .and(bapBoundaries.eq(1)), 11);
+            
     imageYear = imageYear.where(imageYear.eq(21)
         .and(pantanalYear.eq(12))
         .and(bapBoundaries.eq(1)), 12);
-
+        
     // Add the processed image to the map
     Map.addLayer(imageYear, vis, theme.name + ' ' + year, false);
     print('Output year: ' + year, imageYear);
-
+    
     // Export the image to an asset
     Export.image.toAsset({
         image: imageYear,
@@ -116,4 +119,4 @@ years.forEach(function(year) {
 // Add the Cerrado boundary to the map
 var cerrado = ee.FeatureCollection('projects/mapbiomas-workspace/AUXILIAR/biomas-2019').filter(ee.Filter.eq('Bioma', 'Cerrado'));
 var line = ee.Image().paint(cerrado, 'empty', 3).visualize({palette: 'FF0000'});
-Map.addLayer(line, {min: 0, max: 1}, 'Cerrado limit');
+Map.addLayer(cerrado, {min: 0, max: 1}, 'Cerrado limit');
