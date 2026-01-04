@@ -56,7 +56,7 @@ The frequency filter was applied exclusively to pixels classified as native vege
 ## 09_temporal.js
 This filter applies a set of temporal consistency rules to correct short-term spurious transitions and ensure the stability of land use and land cover (LULC) classifications over time (2017–2024). It operates by comparing each pixel’s class over multi-year windows and applying logic to eliminate implausible transitions, enforce class persistence, and refine the first and last years of the time series. The filter follows these four main steps:
 
-*1. 3-year window filtering:* This rule identifies and corrects brief one-year transitions surrounded by the same class before and after (2018-2023). The objective is to correct pixel values that present a specific class in the previous year (year -1), change in the current year, and return to the initial class in the last year of the window (year +1). It is applied to each land use and cover class in the following order: Savanna Formation (4), Grassland Formation (12), Forest Formation (3), Wetland (11), Herbaceous Sandbank Vegetation (50), Mosaic of Uses (21), River, Lake and Ocean (33), and Other Non-Vegetated Areas (25).
+*1. 3-year window filtering:* This rule identifies and corrects brief one-year transitions surrounded by the same class before and after (2018-2023). The objective is to correct pixel values that present a specific class in the previous year (year -1), change in the current year, and return to the initial class in the last year of the window (year +1). It is applied to each land use and cover class in the following order: Savanna Formation (4), Grassland Formation (12), Forest Formation (3), Wetland (11), Herbaceous Sandbank Vegetation (50), Mosaic of Uses (21), River, Lake, and Ocean (33), and Other Non-Vegetated Areas (25).
 
 *3. Correction of the last year (2024):* The filter searches for pixel values that were not classified as Mosaic of Uses (21) in 2024, but were classified as such in 2023 and 2022. The 2024 class is corrected to match the previous year, avoiding any regeneration that cannot be confirmed in the last year.
 
@@ -67,16 +67,16 @@ This filter applies a set of temporal consistency rules to correct short-term sp
 ## 10_noFalseRegrowth.js
 This script applies a set of temporal post-classification rules to reduce false regrowth signals of native vegetation in annual land use and land cover maps. The approach is designed to correct abrupt or inconsistent class transitions that are unlikely from an ecological or land-use perspective.
 
-*1. False Forest Formation Regrowth*  
+*1. False Forest Formation Regrowth:*  
 This rule corrects spurious forest formation regeneration in silviculture areas by enforcing long-term persistence patterns at the beginning or end of the time series. Corrections are constrained using a stable reference classification to avoid introducing unrealistic transitions.
 
-*2a. False Wetland Regeneration (Temporal Interruption)*  
+*2a. False Wetland Regeneration (Temporal Interruption):*  
 This rule removes short-term wetland interruptions characterized by the pattern *wetland → mosaic → wetland (11 → 21 → 11)*, which are interpreted as classification artifacts rather than true land-cover change.
 
-*2b. False Wetland Regeneration (Abrupt Appearance)*  
+*2b. False Wetland Regeneration (Abrupt Appearance):*  
 This rule prevents wetlands from appearing abruptly in a given year when they were not present in the previous year, enforcing temporal continuity in wetland dynamics.
 
-*Rules 3 to 5 False Savanna, Grassland, and Herbaceous Sandbank Vegetation Regeneration (Abrupt Appearance)*
+*Rules 3 to 5 False Savanna, Grassland, and Herbaceous Sandbank Vegetation Regeneration (Abrupt Appearance):*
 This rule ensures that these classes only appear when supported by temporal continuity, preventing isolated or spurious detections.
 
 ## 11_geomorphometric.js
