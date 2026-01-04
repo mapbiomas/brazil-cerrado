@@ -263,11 +263,11 @@ Map.addLayer(stable, vis, '11. Filtered by GEDI', false);
 print ('Output image', stable);
 
 //  Minimum Mappable Unit Filter
-var minPixels = 11;  // ~1 hectare
+var minPixels = 11;  // ~0.1 hectare
 var connected = stable.connectedPixelCount(150, true).gte(minPixels);
 stable = stable.updateMask(connected);
 
-Map.addLayer(stable, vis, '12. Stable pixels with min area (1 ha)');
+Map.addLayer(stable, vis, '12. Stable pixels with min area (0.1 ha)');
 
 // Export as GEE asset
 Export.image.toAsset({
