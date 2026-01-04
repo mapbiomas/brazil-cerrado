@@ -57,7 +57,7 @@ ee.List.sequence({'start': 2017, 'end': 2024}).getInfo()
       // Select the classification for the current year
       var collection_i = classification.select(['classification_' + year]);
       
-      // Create a kernel for neighborhood analysis (Manhattan distance, 24-pixel radius)
+      // Create a kernel for neighborhood analysis (Manhattan distance, 35-pixel radius)
       var kernel = ee.Kernel.manhattan({'radius': 35, 'units': 'pixels'});
       
       // Apply the mode filter to get the most common land cover within the neighborhood
