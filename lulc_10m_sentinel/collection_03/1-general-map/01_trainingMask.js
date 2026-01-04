@@ -242,7 +242,7 @@ Map.addLayer(stable, vis, '10. Filtered by MB Alerta', false);;
 
 // ============================================================================
 //                          GEDI BASED MASK  
-// From Lang et al., 2023 (https://www.nature.com/articles/s41559-023-02206-6)
+// From Lang et al., 2022 (https://www.nature.com/articles/s41559-023-02206-6)
 // ============================================================================
 
 // 11 - Canopy height (in meters)
