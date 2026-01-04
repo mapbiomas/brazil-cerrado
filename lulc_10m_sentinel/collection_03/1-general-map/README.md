@@ -60,9 +60,9 @@ This filter applies a set of temporal consistency rules to correct short-term sp
 
 *3. Correction of the last year (2024):* The filter searches for pixel values that were not classified as Mosaic of Uses (21) in 2024, but were classified as such in 2023 and 2022. The 2024 class is corrected to match the previous year, avoiding any regeneration that cannot be confirmed in the last year.
 
-*4. Stabilization of the first year (2017):* If a pixel was classified as native vegetation (Forest, Savanna, Wetland, Grassland, or Sandbank) in both 2018 and 2018 but not in 2017, the classification is corrected to reflect native vegetation also in 2017. This ensures temporal consistency from the beginning of the series.
+*4. Stabilization of the first year (2017):* If a pixel was classified as native vegetation (Forest, Savanna, Wetland, Grassland, or Sandbank) in both 2018 and 2019 but not in 2017, the classification is corrected to reflect native vegetation also in 2017. This ensures temporal consistency from the beginning of the series.
 
-*5. Removal of small patches of recent vegetation regrowth (2024):* To avoid overestimating regeneration, only areas of native vegetation regrowth between 2023 and 2024 larger than 1 hectare (11 connected pixels) are retained. Smaller patches are assumed to be noise and are replaced by the 2023 class.
+*5. Removal of small patches of recent vegetation regrowth (2024):* To avoid overestimating regeneration, only areas of native vegetation regrowth between 2023 and 2024 larger than 1 hectare are retained. Smaller patches are assumed to be noise and are replaced by the 2023 class.
 
 ## 10_noFalseRegrowth.js
 This script applies a set of temporal post-classification rules to reduce false regrowth signals of native vegetation in annual land use and land cover maps. The approach is designed to correct abrupt or inconsistent class transitions that are unlikely from an ecological or land-use perspective.
