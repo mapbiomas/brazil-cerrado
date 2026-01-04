@@ -27,7 +27,7 @@ var vis = {
 var collection = ee.Image('projects/mapbiomas-public/assets/brazil/lulc/collection10/mapbiomas_brazil_collection10_integration_v2')
                    .updateMask(aoi_img);
 
-// Set function to reclassify collection by native vegetation (1), non‑vegetation (2) and rocky outcrop (29)
+// Set function to reclassify collection by forest (1), herbaceous vegetation (2), wetland and water (3), farming (4), and non-vegetated (5)
 var reclassify = function(image) {
   return image.remap({
         'from': [3, 4, 5, 6, 49, 11, 12, 32, 50, 15, 19, 39, 20, 40, 62, 41, 36, 46, 47, 35, 48, 23, 24, 30, 33, 31],
