@@ -1,4 +1,4 @@
-## 01_stablePixels.js
+## 01_trainingMask.js
 Build the training mask based on stable pixels from MapBiomas Collection 10 (2016 to 2024), reference maps, and GEDI-based filtering 
 ```javascript
 // read training mask
@@ -64,7 +64,7 @@ This filter applies a set of temporal consistency rules to correct short-term sp
 
 *5. Removal of small patches of recent vegetation regrowth (2024):* To avoid overestimating regeneration, only areas of native vegetation regrowth between 2023 and 2024 larger than 1 hectare are retained. Smaller patches are assumed to be noise and are replaced by the 2023 class.
 
-## 10_noFalseRegrowth.js
+## 10_falseRegrowth.js
 This script applies a set of temporal post-classification rules to reduce false regrowth signals of native vegetation in annual land use and land cover maps. The approach is designed to correct abrupt or inconsistent class transitions that are unlikely from an ecological or land-use perspective.
 
 *1. False Forest Formation Regrowth:*  
