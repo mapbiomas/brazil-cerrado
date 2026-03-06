@@ -7,7 +7,7 @@ Developed by the [Instituto de Pesquisa Ambiental da Amazônia (IPAM)](https://i
 
 ---
 
-## About
+## About (edicion)
 
 This repository contains scripts and resources for the mapping of land use and land cover (LULC) in the **Cerrado biome**, as part of the MapBiomas Brazil initiative. The mapping is based on multi-temporal remote sensing imagery from the **Landsat (30m)** and **Sentinel (10m)** satellite programs.
 
