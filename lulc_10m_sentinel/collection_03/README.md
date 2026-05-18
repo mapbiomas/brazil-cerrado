@@ -22,11 +22,11 @@ For detailed information about the classification process and methodology, refer
 ## Workflow
 The project is organized into folders representing key steps of the Cerrado biome classification schema. Each folder contains scripts relevant to a specific processing stage:
 
-1. [General map classification](https://github.com/mapbiomas/brazil-cerrado/edit/main/lulc_10m_sentinel/collection_03/1-general-map)
+1. [General map classification](https://github.com/mapbiomas/brazil-cerrado/tree/main/lulc_10m_sentinel/collection_03/1-general-map)
 
-2. [Rocky Outcrop classification](https://github.com/mapbiomas/brazil-cerrado/edit/main/lulc_10m_sentinel/collection_03/2-rocky-outcrop)
+2. [Rocky Outcrop classification](https://github.com/mapbiomas/brazil-cerrado/tree/main/lulc_10m_sentinel/collection_03/2-rocky-outcrop)
 
-3. [Integration](https://github.com/mapbiomas/brazil-cerrado/edit/main/lulc_10m_sentinel/collection_03/3-integration)
+3. [Integration](https://github.com/mapbiomas/brazil-cerrado/tree/main/lulc_10m_sentinel/collection_03/3-integration)
 
 ## Contact
 For clarification or issue/bug report, please write to <barbara.silva@ipam.org.br and dhemerson.costa@ipam.org.br>
