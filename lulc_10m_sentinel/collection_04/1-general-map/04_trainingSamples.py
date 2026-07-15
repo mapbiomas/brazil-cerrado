@@ -60,7 +60,7 @@ from modules.SpectralIndexes import *
 version_in = '4'
 
 # Define the output version for the generated training data
-version_out  = '5'
+version_out  = '4'
 
 # Define the base output folder path for storing the generated training assets in GEE
 dirout = f'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/SENTINEL/trainings/'
