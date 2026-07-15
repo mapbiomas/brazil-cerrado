@@ -1,4 +1,4 @@
-// -- -- -- -- 07_ 1st Spatial Filter
+// -- -- -- -- 07) 1st Spatial Filter
 // This script applies a spatial filter to the annual LULC classification maps.
 // It removes small isolated patches (Minimum Mappable Unit) and replaces them
 // with the focal mode of a 9x9 pixel neighborhood. Specific classes (e.g., 
