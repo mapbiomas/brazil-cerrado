@@ -13,7 +13,7 @@ This repository contains scripts and resources for the mapping of land use and l
 
 The classification processes include data preparation, model training, classification, and a series of post-processing routines to ensure temporal and spatial consistency of the maps.
 
-For detailed methodology and technical specifications, refer to the Cerrado Biome Appendix of the [Algorithm Theoretical Basis Document (ATBD)](https://mapbiomas.org/download-dos-atbds).
+For detailed methodology and technical specifications, refer to the Cerrado Biome Appendix of the [Algorithm Theoretical Basis Document (ATBD)](https://brasil.mapbiomas.org/en/atbd-entenda-cada-etapa/).
 
 ---
 
