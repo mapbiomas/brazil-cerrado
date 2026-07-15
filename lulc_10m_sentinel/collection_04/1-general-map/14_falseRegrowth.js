@@ -18,7 +18,7 @@ var vis = {
 var inputVersion = '2';
 
 // Define the output version
-var outputVersion = '7';
+var outputVersion = '9';
 
 // Define the base directory
 var root = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/SENTINEL/C04-POST-CLASSIFICATION/';
