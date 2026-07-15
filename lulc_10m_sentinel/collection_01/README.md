@@ -21,7 +21,7 @@ For detailed information about the classification process and methodology, pleas
 ## Workflow
 The project is organized into folders representing key steps of the Cerrado biome classification schema. Each folder contains scripts relevant to a specific processing stage:
 
-1. [General map classification](https://github.com/mapbiomas/brazil-cerrado/tree/main/lulc_10m_sentinel)
+1. [General map classification](https://github.com/mapbiomas/brazil-cerrado/tree/main/lulc_10m_sentinel/collection_01)
 
 ## Contact
 For clarification or issue/bug report, please write to <dhemerson.costa@ipam.org.br and barbara.silva@ipam.org.br>
