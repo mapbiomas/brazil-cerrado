@@ -23,10 +23,10 @@ var geometry = ee.Geometry.Polygon(
 var out = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/SENTINEL/C04-POST-CLASSIFICATION/';
 
 // Define the input version
-var inputVersion = '4';
+var inputVersion = '3';
 
 // Define the output version
-var outputVersion = '4';
+var outputVersion = '3';
 
 // Print the input version to the console for tracking purposes
 print ("Classification Version: ", inputVersion);
