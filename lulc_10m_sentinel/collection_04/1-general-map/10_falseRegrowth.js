@@ -1,230 +1,194 @@
-// -- -- -- -- 10_falseRegrowth
-// post-processing filter: temporal post-classification filters to remove false regrowth signals (native vegetation) in annual LULC maps
-// barbara.silva@ipam.org.br, dhemerson.costa@ipam.org.br and ana.souza@ipam.org.br
+// -- -- -- -- 14) False Regrowth Filter
+// This script applies sequential temporal filters to remove false native 
+// vegetation regrowth signals in the annual LULC maps. It evaluates chronological 
+// transitions and forces strict progression rules (e.g., blocking sudden 
+// appearances of Wetlands, Sandbanks, or Savannas over farming areas) to ensure 
+// temporal logic and stability.
 
-// Import mapbiomas color schema 
+
+// Define visualization parameters
 var vis = {
     min: 0,
     max: 62,
     palette:require('users/mapbiomas/modules:Palettes.js').get('classification8'),
-    bands: 'classification_2020' 
+    bands: 'classification_2024'
 };
 
-// Set root directory
-var root = 'projects/mapbiomas-workspace/COLECAO_DEV/COLECAO10_DEV/CERRADO/SENTINEL/C03-POST-CLASSIFICATION/';
-var out = 'projects/mapbiomas-workspace/COLECAO_DEV/COLECAO10_DEV/CERRADO/SENTINEL/C03-POST-CLASSIFICATION/';
+// Define the input version
+var inputVersion = '2';
 
-// Set metadata
-var inputVersion = '10';
-var outputVersion = '11';
+// Define the output version
+var outputVersion = '7';
 
-// Define input file
-var inputFile = 'CERRADO_C03_gapfill_v9_sandveg_v4_frequency_v7_temporal_v' + inputVersion;
+// Define the base directory
+var root = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/SENTINEL/C04-POST-CLASSIFICATION/';
+var out = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/SENTINEL/C04-POST-CLASSIFICATION/';
 
-// Load classification image
+// Construct the base name of the input file
+var inputFile = 'CERRADO_C04_gapfill_v3_spt_v1_tp_v3_tra_v2_snv_v3_traj_v4_freq_v2_temp_v' + inputVersion;
+
+// Load the classification multi-band image
 var classificationInput = ee.Image(root + inputFile);
 Map.addLayer(classificationInput, vis, 'Input classification');
+print('Input classification', classificationInput);
 
-// Internal reference version used to constrain corrections
-var col_5 = ee.Image(root + 'CERRADO_C03_gapfill_v5');
-Map.addLayer(col_5, vis, 'col_5 classification');
+// Initialize an active image variable to iteratively accumulate the corrected bands
+var classificationOutput = classificationInput;
 
-// Initialize empty image to store corrected bands
-var classificationOutput = ee.Image([]);
+// Generate a sequential list of all years evaluated in the time series
+var allYears = ee.List.sequence(2017, 2025).getInfo();
 
-// --- --- --- RULE 01 — FALSE FOREST / SILVICULTURE REGENERATION
-// Correct spurious forest/silviculture regrowth using historical patterns and a stable reference classification
-ee.List.sequence({'start': 2017, 'end': 2024}).getInfo().forEach(function(year_i) {
-  
-  // Select the classification image for the corresponding year
-  var imageYear = classificationInput.select('classification_' + year_i);
-  var versionYear = col_5.select('classification_' + year_i);
-  
-  imageYear = imageYear.where(imageYear.eq(33).and(versionYear.eq(3)), 3);
-  imageYear = imageYear.where(imageYear.eq(21).and(versionYear.eq(4)), 4);
-  
-  // Identify early or late silviculture persistence
-  var y2017 = classificationInput.select('classification_2017').eq(21);
-  var y2018 = classificationInput.select('classification_2018').eq(21);
-  var y2023 = classificationInput.select('classification_2023').eq(21);
-  var y2024 = classificationInput.select('classification_2024').eq(21);
-
-  var earlySilvi = y2017.and(y2018);
-  var lateSilvi = y2023.and(y2024);
-  
-  // Enforce silviculture class
-  var silviCondition = earlySilvi.or(lateSilvi);
-
-  var finalCondition = silviCondition.and(versionYear.eq(9));
-
-  imageYear = imageYear.where(finalCondition, 21);
-  
-  // Add the reclassified band to the final filtered image
-  classificationOutput = classificationOutput.addBands(imageYear.updateMask(imageYear.neq(0)));
-});
-
-Map.addLayer(classificationOutput, vis, '01: False forest regrowth');
-
-
-// --- --- --- RULE 02 — FALSE WETLAND REGENERATION 
-// Correct 11 → 21 → 11 temporal artifacts. Interpreted as false regeneration inside wetland areas
-function correctWetland(currentYear, previousYear) {
-  var mask = currentYear.neq(11).and(previousYear.eq(11));
-  return currentYear.where(mask, previousYear);
-}
-
-var allYears = ee.List.sequence(2017, 2024).getInfo();
-
+// Rule A: False Wetland Interruption & Consistency
+// Iterate through the middle years to find and correct anomalous 11 -> 21 -> 11 sequences
 for (var i = 1; i < allYears.length - 1; i++) {
-
+  // Identify the target years for the moving 3-year window
   var yearPrev = allYears[i - 1];
   var yearCurr = allYears[i];
   var yearNext = allYears[i + 1];
 
+  // Extract the corresponding annual bands from the actively updating classification image
   var prevBand = classificationOutput.select('classification_' + yearPrev);
   var currBand = classificationOutput.select('classification_' + yearCurr);
   var nextBand = classificationOutput.select('classification_' + yearNext);
   
-  // Identify false wetland interruption
+  // Create a mask identifying false Wetland interruptions: previous is 11, current is 21, next is 11
   var condA = prevBand.eq(11)
-      .and(currBand.eq(21))
-      .and(nextBand.eq(11));
+              .and(currBand.eq(21))
+              .and(nextBand.eq(11));
 
+  // Correct the anomaly by changing the intermediate 21 to 12 
   var correctedA = currBand.where(condA, 12);
 
-  classificationOutput = classificationOutput.addBands(
-    correctedA.rename('classification_' + yearCurr),
-    null,
-    true
-  );
+  // Overwrite the current year's band in the active image stack with the corrected version
+  classificationOutput = classificationOutput.addBands(correctedA.rename('classification_' + yearCurr), null, true);
 }
 
-// Check first and last year consistency
+// Extract the classification band for the very first year
 var firstBand = classificationOutput.select('classification_2017');
-var lastBand = classificationOutput.select('classification_2024');
+// Extract the classification band for the very last year
+var lastBand = classificationOutput.select('classification_2025');
 
-// Condition where grassland in first year becomes wetland in last year
+// Create a mask for pixels starting as Grassland (12) and ending as Wetland (11)
 var condB = firstBand.eq(12).and(lastBand.eq(11));
 
-// Apply correction across all years if condition is met
-if (condB) {
-  allYears.forEach(function(y) {
-    var bandY = classificationOutput.select('classification_' + y);
-    var correctedB = bandY.where(condB, 11);
-    classificationOutput = classificationOutput.addBands(
-      correctedB.rename('classification_' + y),
-      null,
-      true
-    );
-  });
+// Iterate over all years in the time series to enforce Wetland consistency for these specific pixels
+allYears.forEach(function(y) {
+  // Extract the specific annual band
+  var bandY = classificationOutput.select('classification_' + y);
+  // Force the pixel to be Wetland (11) for the entire series if the edge condition is met
+  var correctedB = bandY.where(condB, 11);
+  // Overwrite the specific annual band in the active image stack
+  classificationOutput = classificationOutput.addBands(correctedB.rename('classification_' + y), null, true);
+});
+
+// Render the results to the map display  
+Map.addLayer(classificationOutput, vis, 'A: False wetland regeneration', false);
+
+// Rule B: Prevent Abrupt Wetland Appearance
+// Iterate forward through the time series to ensure Wetlands only appear if supported by history
+for (var j = 1; j < allYears.length; j++) {
+  // Identify the current and immediately preceding years
+  var currentYearW = allYears[j];
+  var previousYearW = allYears[j - 1];
+
+  // Extract the respective annual bands
+  var currentBandW = classificationOutput.select('classification_' + currentYearW);
+  var previousBandW = classificationOutput.select('classification_' + previousYearW);
+
+  // Identify invalid abrupt wetlands: current is 11, but previous is NOT 11
+  var maskWetland = currentBandW.eq(11).and(previousBandW.neq(11));
+  
+  // Overwrite the abrupt Wetland with the class from the previous stable year
+  var correctedBandW = currentBandW.where(maskWetland, previousBandW);
+
+  // Overwrite the current year's band in the active image stack
+  classificationOutput = classificationOutput.addBands(correctedBandW.rename('classification_' + currentYearW), null, true);
 }
 
-Map.addLayer(classificationOutput, vis, '02: False wetland regeneration');
-print ('02: False wetland regeneration)', classificationOutput);
+// Render the results to the map display  
+Map.addLayer(classificationOutput, vis, 'B: No abrupt wetland', false);
 
+// Rule C: Prevent Abrupt Sandbank Vegetation Appearance
+// Iterate forward to ensure Sandbank Vegetation (50) does not appear without temporal continuity
+for (var k = 1; k < allYears.length; k++) {
+  // Identify the current and immediately preceding years
+  var currentYearR = allYears[k];
+  var previousYearR = allYears[k - 1];
 
-// --- --- --- RULE 02b — FALSE WETLAND REGENERATION 
-// Prevent wetlands (11) from appearing without support from previous year
-function correctWetland(currentYear, previousYear) {
-  var mask = currentYear.eq(11).and(previousYear.neq(11));
-  return currentYear.where(mask, previousYear);
+  // Extract the respective annual bands
+  var currentBandR = classificationOutput.select('classification_' + currentYearR);
+  var previousBandR = classificationOutput.select('classification_' + previousYearR);
+
+  // Identify invalid abrupt sandbanks: current is 50, but previous is NOT 50
+  var maskRestinga = currentBandR.eq(50).and(previousBandR.neq(50));
+  
+  // Overwrite the abrupt Sandbank with the class from the previous year
+  var correctedBandR = currentBandR.where(maskRestinga, previousBandR);
+  
+  // Overwrite the current year's band in the active image stack
+  classificationOutput = classificationOutput.addBands(correctedBandR.rename('classification_' + currentYearR), null, true);
 }
 
-var allYears = ee.List.sequence(2017, 2024).getInfo();
+// Render the results to the map display  
+Map.addLayer(classificationOutput, vis, 'C: Sandbank veg. adjustment', false);
 
-for (var i = 1; i < allYears.length; i++) {
-  var currentYear = allYears[i];
-  var previousYear = allYears[i - 1];
+// Rule D: Prevent Abrupt Savanna Over Farming
+// Iterate forward to prevent Savanna (4) from abruptly replacing Mosaic of Uses (21)
+for (var l = 1; l < allYears.length; l++) {
+  // Identify the current and immediately preceding years
+  var currentYearS = allYears[l];
+  var previousYearS = allYears[l - 1];
 
-  var currentBand = classificationOutput.select('classification_' + currentYear);
-  var previousBand = classificationOutput.select('classification_' + previousYear);
+  // Extract the respective annual bands
+  var currentBandS = classificationOutput.select('classification_' + currentYearS);
+  var previousBandS = classificationOutput.select('classification_' + previousYearS);
 
-  var correctedBand = correctWetland(currentBand, previousBand);
-
-  classificationOutput = classificationOutput.addBands(
-    correctedBand.rename('classification_' + currentYear), null, true
-  );
+  // Identify invalid savanna regrowths: current is 4, but previous is 21
+  var maskSavanna = currentBandS.eq(4).and(previousBandS.eq(21));
+  
+  // Overwrite the abrupt Savanna with the Mosaic of Uses from the previous year
+  var correctedBandS = currentBandS.where(maskSavanna, previousBandS);
+  
+  // Overwrite the current year's band in the active image stack
+  classificationOutput = classificationOutput.addBands(correctedBandS.rename('classification_' + currentYearS), null, true);
 }
 
-Map.addLayer(classificationOutput, vis, '02b: False wetland regeneration');
-print ('02b: False wetland regeneration)', classificationOutput);
+// Render the results to the map display  
+Map.addLayer(classificationOutput, vis, 'D: Savanna adjustment', false);
 
+// Rule E: Prevent Abrupt Grassland Appearance
+// Iterate forward to ensure Grassland (12) only appears if supported by temporal history
+for (var m = 1; m < allYears.length; m++) {
+  // Identify the current and immediately preceding years
+  var currentYearG = allYears[m];
+  var previousYearG = allYears[m - 1];
 
-// --- --- RULE 03 — ABRUPT RESTINGA APPEARANCE
-// Prevent Sandbank Vegetation (Restinga Herbácea, 50) from appearing without temporal continuity
-function correctRestinga(currentYear, previousYear) {
-  return currentYear.where(currentYear.eq(50).and(previousYear.neq(50)), previousYear);
+  // Extract the respective annual bands
+  var currentBandG = classificationOutput.select('classification_' + currentYearG);
+  var previousBandG = classificationOutput.select('classification_' + previousYearG);
+
+  // Identify invalid abrupt grasslands: current is 12, but previous is NOT 12
+  var maskGrassland = currentBandG.eq(12).and(previousBandG.neq(12));
+  
+  // Overwrite the abrupt Grassland with the class from the previous year
+  var correctedBandG = currentBandG.where(maskGrassland, previousBandG);
+  
+  // Overwrite the current year's band in the final active image stack
+  classificationOutput = classificationOutput.addBands(correctedBandG.rename('classification_' + currentYearG), null, true);
 }
 
-// Apply  correction throughout time series
-for (var i = 1; i < allYears.length; i++) {
-  var current = allYears[i];
-  var previous = allYears[i - 1];
+// Render the results to the map display
+Map.addLayer(classificationOutput, vis, 'E: Grassland adjustment');
 
-  var currentBand = classificationOutput.select('classification_' + current);
-  var previousBand = classificationOutput.select('classification_' + previous);
-
-  var correctedBand = correctRestinga(currentBand, previousBand);
-  classificationOutput = classificationOutput.addBands(correctedBand.rename('classification_' + current), null, true);
-}
-
-Map.addLayer(classificationOutput, vis, '03: Sandbank veg. adjustment');
-print('Sandbank veg. adjustment', classificationOutput);
-
-
-// --- --- RULE 04 — ABRUPT SAVANNA APPEARANCE
-// Define function to prevent abrupt Savanna (4) replacing farming areas (21)
-function correctSavana(currentYear, previousYear) {
-  return currentYear.where(currentYear.eq(4).and(previousYear.eq(21)), previousYear);
-}
-
-// Apply savanna correction throughout time series
-for (var i = 1; i < allYears.length; i++) {
-  var current = allYears[i];
-  var previous = allYears[i - 1];
-
-  var currentBand = classificationOutput.select('classification_' + current);
-  var previousBand = classificationOutput.select('classification_' + previous);
-
-  var correctedBand = correctSavana(currentBand, previousBand);
-  classificationOutput = classificationOutput.addBands(correctedBand.rename('classification_' + current), null, true);
-}
-
-Map.addLayer(classificationOutput, vis, '04: Savanna adjustment');
-print('Restinga adjustment', classificationOutput);
-
-// --- --- RULE 05 — ABRUPT GRASSLAND APPEARANCE
-// Define function to prevent abrupt Grassland appearance
-function correctGrassLand(currentYear, previousYear) {
-  return currentYear.where(currentYear.eq(12).and(previousYear.neq(12)), previousYear);
-}
-
-// Apply grassland correction across the time series
-for (var i = 1; i < allYears.length; i++) {
-  var current = allYears[i];
-  var previous = allYears[i - 1];
-
-  var currentBand = classificationOutput.select('classification_' + current);
-  var previousBand = classificationOutput.select('classification_' + previous);
-
-  var correctedBand = correctGrassLand(currentBand, previousBand);
-  classificationOutput = classificationOutput.addBands(correctedBand.rename('classification_' + current), null, true);
-}
-
-Map.addLayer(classificationOutput, vis, '05: Grassland adjustment');
-print('Restinga adjustment', classificationOutput);
-
-
-print ('Output classification', classificationOutput);
+// Print the resulting final filtered image structure to the console
+print('Output classification', classificationOutput);
 
 // Export as GEE asset
 Export.image.toAsset({
     'image': classificationOutput,
-    'description': inputFile + '_falseReg_v' + outputVersion,
-    'assetId': out +  inputFile + '_falseReg_v' + outputVersion,
-    'pyramidingPolicy': {
-        '.default': 'mode'
-    },
+    'description': inputFile + '_freg_v' + outputVersion,
+    'assetId': out +  inputFile + '_freg_v' + outputVersion,
+    'pyramidingPolicy': {'.default': 'mode'},
     'region':classificationOutput.geometry(),
     'scale': 10,
     'maxPixels': 1e13
