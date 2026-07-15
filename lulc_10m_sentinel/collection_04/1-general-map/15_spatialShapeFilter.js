@@ -6,7 +6,8 @@
 // lacking a solid core, or tiny speckles) are replaced by the focal mode of the 
 // surrounding valid LULC classes.
 
-// Import MapBiomas color schema
+
+// Define visualization parameters
 var vis = {
   min: 0,
   max: 62,
