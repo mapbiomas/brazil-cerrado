@@ -33,4 +33,4 @@ The project is organized into folders representing key steps of the Cerrado biom
 4. [Integration of maps](https://github.com/mapbiomas/brazil-cerrado/tree/main/lulc_30m_landsat/collection_60/4-integrate-map)
 
 ## Contact
-For clarification or issue/bug report, please write to <dhemerson.costa@ipam.org.br and barbara.silva@ipam.org.br>
+For clarification or issue/bug reports, please write to <dhemerson.costa@ipam.org.br and barbara.silva@ipam.org.br>
