@@ -1,262 +1,195 @@
-// --- --- --- 07b_sandbankVegetation
-// post-processing filter: identify and classify Herbaceous Sandbank Vegetation (Restinga Herbácea) using satellite embeddings and ecological constraints
-// barbara.silva@ipam.org.br, dhemerson.costa@ipam.org.br and ana.souza@ipam.org.br
+// -- -- -- -- 10) Sandbank Vegetation Filter
+// This script applies a post-processing filter to correct herbaceous sandbank 
+// vegetation (restinga herbácea) within coastal areas. It integrates a soil vector mask 
+// of coastal sandy deposits with the historical frequency of Grassland (Class 12) 
+// derived from Landsat-based MapBiomas GTB classifications.
 
-// Import MapBiomas color palette
+
+// Define visualization parameters
 var vis = {
   min: 0,
-  max: 62,
-  palette: require('users/mapbiomas/modules:Palettes.js').get('classification8'),
+  max: 75,
+  palette: require('users/mapbiomas/modules:Palettes.js').get('brazil'),
   bands: 'classification_2020'
 };
 
-// Set metadata
-var inputVersion = '9';
-var outputVersion = '4';
+// Define a binary visualization parameter set for diagnostic masks
+var maskVis = { min: 0, max: 1, palette: ['ffffff', 'ff00ff'] };
 
-// Set root directory
-var input = 'projects/mapbiomas-workspace/COLECAO_DEV/COLECAO10_DEV/CERRADO/SENTINEL/C03-POST-CLASSIFICATION/';
-var output = 'projects/mapbiomas-workspace/COLECAO_DEV/COLECAO10_DEV/CERRADO/SENTINEL/C03-POST-CLASSIFICATION/';
+// Define the input version
+var inputVersion = '2';
 
-var inputFile = 'CERRADO_C03_gapfill_v' + inputVersion;
-var classificationInput = ee.Image(input + inputFile);
+// Define the output version
+var outputVersion = '3';
 
-// Generic sample points (non-sandbank veg classes)
-var classes = ee.FeatureCollection(
-  'projects/mapbiomas-workspace/COLECAO_DEV/COLECAO10_DEV/CERRADO/SENTINEL/sample/points/samplePoints_v3'
-);
+// Define the base directory
+var root = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/SENTINEL/C04-POST-CLASSIFICATION/';
+var out = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/SENTINEL/C04-POST-CLASSIFICATION/';
 
-// Sandbank vegetation training samples (all years)
-var sandbankSamples = ee.FeatureCollection(
-  'projects/mapbiomas-workspace/COLECAO_DEV/COLECAO10_DEV/CERRADO/SENTINEL/trainings/restinga/train_col03_restinga_all_years_v0'
-);
+// Construct the base name of the input file
+var inputFile = 'CERRADO_C04_gapfill_v3_spt_v1_tp_v3_tra_v' + inputVersion;
 
-// Select Cerrado classification region 1
-var region1 = ee.FeatureCollection(
-  'users/dh-conciani/collection7/classification_regions/vector_v2'
-).filter(ee.Filter.eq('mapb', 1));
+// Load the classification multi-band image
+var classificationInput = ee.Image(root + inputFile);
+print('Input classification', classificationInput);
+Map.addLayer(classificationInput, vis, 'Input classification', false);
 
-// Coastal deposits mask (Brazilian Geological Service - CPRM/SGB)
-var coastalDeposits = ee.Image(
-  'projects/barbaracosta-ipam/assets/base/CPRM_coastal-deposits'
-).select('first').clip(region1);
+// Set the starting and ending year of the processing time-series
+var startYear = 2017;
+var endYear = 2025;
 
-// Geometry used throughout the analysis
-var roiMask = coastalDeposits.selfMask();
-var roiGeom = roiMask.geometry();
+// Set the high-frequency temporal threshold above which pixels are remapped to Herbaceous Sandbank
+var highFrequencyThreshold = 0.80;
+// Set the minimum threshold for medium-frequency Grassland occurrence
+var mediumFrequencyMin = 0.10;
+// Set the maximum threshold for medium-frequency Grassland occurrence
+var mediumFrequencyMax = 0.80;
 
-// Filter samples spatially
-var fcSandbank = sandbankSamples
-  .filterBounds(roiGeom)
-  .filter(ee.Filter.eq('class', 50));
+// Define an array of annual classes eligible to be reclassified by the sandbank rules
+var eligibleClasses = [4, 11, 12, 21, 33];
 
-var fcOthers = classes.filterBounds(roiGeom);
+// Define target output class codes
+var grasslandClass = 12;
+var herbaceousSandbankClass = 50;
 
-// Randomly subsample "other classes" to balance the dataset
-fcOthers = fcOthers
-  .randomColumn('rand')
-  .sort('rand')
-  .limit(1360);
+// Extract the native projection properties from the first band of the input classification
+var referenceProjection = classificationInput.select(0).projection();
 
-// Diagnostics
-print('Total generic samples:', classes.size());
-print('Total sandbank veg samples:', sandbankSamples.size());
-print('Generic samples inside ROI:', fcOthers.size());
-print('Sandbank veg samples inside ROI:', fcSandbank.size());
+// Load the coastal sandy deposits vector dataset from CPRM/SGB (Brazilian Geological Service)
+var soilVector = ee.FeatureCollection('projects/barbaracosta-ipam/assets/base/CPRM_coastal_deposits_v4');
 
-// Define target labels
-// target = 1 → Sandbank veg
-// target = 0 → Other land cover classes
-var othersLabeled = fcOthers.map(function (f) {
-  return f.set('target', 0);
-});
+// Paint the vector boundaries into a binary 10m raster matching the classification's projection and clip it
+var soilMask = ee.Image(0).byte().paint({ featureCollection: soilVector, color: 1 })
+                  .rename('soil_mask')
+                  .reproject({ crs: referenceProjection, scale: 10 })
+                  .clip(classificationInput.geometry()).unmask(0).byte();
 
-var sandbankLabeled = fcSandbank.map(function (f) {
-  return f.set('target', 1);
-});
+// Add the rasterized coastal sandy deposits mask to the map display
+Map.addLayer(soilMask.selfMask(), {palette: ['yellow']}, 'Coastal sandy deposits mask', false);
 
-// Merge final training samples
-var samples = othersLabeled.merge(sandbankLabeled);
+// Define the asset ID for the GTB reference Landsat-based classification
+var gtbAsset = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/LANDSAT/C11-POST-CLASSIFICATION/CERRADO_C11_gapfill_v21';
 
-Map.addLayer(samples, {}, 'Training samples (ROI)');
+// Load the GTB classification image
+var gtbClassification = ee.Image(gtbAsset);
 
-// Annual satellite embeddings (Google Satellite Embedding model)
-var embeddingAsset = 'GOOGLE/SATELLITE_EMBEDDING/V1/ANNUAL';
+// Print the loaded GTB reference classification metadata to the console
+print('GTB classification', gtbClassification);
 
-var embeddings = ee.ImageCollection(embeddingAsset)
-  .filterDate('2020-01-01', '2021-01-01')
-  .filterBounds(roiGeom)
-  .mosaic();
+// Define a function to generate a client-side array of sequential years
+var makeYearList = function(startYear, endYear) {
+  var years = [];
+  for (var year = startYear; year <= endYear; year++) { years.push(year); }
+  return years;
+};
 
-Map.addLayer(embeddings, {}, 'Satellite embeddings');
+// Generate the list of processing years
+var years = makeYearList(startYear, endYear);
 
-var bandNames = embeddings.bandNames();
+// Define a function to consistently format band names based on the year
+var getBandName = function(year) { return 'classification_' + year; };
 
-// Sample embeddings at training points
-var samplesWithEmbeddings = embeddings.sampleRegions({
-  collection: samples,
-  scale: 10,
-  geometries: true
-});
+// Map over the years array to generate the standardized target band names
+var bandNames = years.map(function(year) { return getBandName(year); });
 
-print('Total samples with embeddings:', samplesWithEmbeddings.size());
+// Select only the matching temporal bands from the GTB reference dataset
+var gtbSeries = gtbClassification.select(bandNames);
 
-// Split by class
-var sandbank = samplesWithEmbeddings.filter(ee.Filter.eq('target', 1));
-var others = samplesWithEmbeddings.filter(ee.Filter.eq('target', 0));
+// Print the selected GTB temporal subset metadata to the console
+print('Selected GTB series', gtbSeries);
 
-// ======================================================================
-// FEATURE SEPARABILITY ANALYSIS
-// ======================================================================
+// Create a temporal binary image stack flagging where the GTB reference was classified as Grassland (Class 12)
+var gtbClass12Binary = gtbSeries.eq(grasslandClass);
 
-// Computes F-score per embedding band to evaluate class separability
-var fScores = bandNames.map(function (band) {
+// Sum the boolean stack across the time series to count total years classified as Grassland per pixel
+var class12Count = gtbClass12Binary.reduce(ee.Reducer.sum()).rename('gtb_12_count');
 
-  var r = sandbank.aggregate_array(band);
-  var o = others.aggregate_array(band);
+// Count total valid (non-masked) GTB observations per pixel across the temporal series
+var validCount = gtbSeries.mask().reduce(ee.Reducer.sum()).rename('gtb_valid_count');
 
-  var meanR = ee.Number(r.reduce(ee.Reducer.mean()));
-  var meanO = ee.Number(o.reduce(ee.Reducer.mean()));
-  var varR  = ee.Number(r.reduce(ee.Reducer.variance()));
-  var varO  = ee.Number(o.reduce(ee.Reducer.variance()));
+// Calculate the temporal frequency of Grassland class occurrence (years present / valid observations)
+var class12Frequency = class12Count.divide(validCount).updateMask(validCount.gt(0)).rename('gtb_12_frequency');
 
-  var numerator   = meanR.subtract(meanO).pow(2);
-  var denominator = varR.add(varO);
+// Create a mask isolating pixels with high Grassland frequency (above 80%) in the GTB record
+var gtb12HighFrequencyMask = class12Frequency.gt(highFrequencyThreshold).rename('gtb_12_high_frequency').byte();
 
-  var f = numerator.divide(denominator);
+// Create a mask isolating pixels with medium Grassland frequency (between 10% and 80%) in the GTB record
+var gtb12MediumFrequencyMask = class12Frequency.gte(mediumFrequencyMin).and(class12Frequency.lte(mediumFrequencyMax)).rename('gtb_12_medium_frequency').byte();
 
-  return ee.Feature(null, {
-    band: band,
-    fscore: f
-  });
-});
+// Intersect the high-frequency GTB mask with the CPRM sandy soil mask to generate the high-frequency Herbaceous sandbank mask
+var herbaceousHighFrequencyMask = gtb12HighFrequencyMask.and(soilMask.eq(1)).rename('herbaceous_high_frequency_mask').byte();
 
-// Rank bands by separability
-var rankedFScores = ee.FeatureCollection(fScores).sort('fscore', false);
+// Intersect the medium-frequency GTB mask with the CPRM sandy soil mask to generate the medium-frequency Herbaceous sandbank mask
+var herbaceousMediumFrequencyMask = gtb12MediumFrequencyMask.and(soilMask.eq(1)).rename('herbaceous_medium_frequency_mask').byte();
 
-print('Embedding band separability ranking (F-score):', rankedFScores);
+// Define a helper function to create a boolean mask for a specific list of class values
+var getClassMask = function(image, classList) {
+  return image.remap(classList, ee.List.repeat(1, classList.length), 0).eq(1);
+};
 
-// Selected best embedding band (from F-score ranking)
-var bestBand = 'A18';
+// Define the function to apply sandbank corrections to a single annual band
+var applySandbankCorrection = function(year) {
+  // Retrieve the standardized band name for the current iteration year
+  var bandName = getBandName(year);
+  // Extract the specific annual band from the multi-band classification input
+  var currentClass = classificationInput.select(bandName);
 
-// Compute class means
-var meanRest = ee.Number(
-  sandbank.reduceColumns(ee.Reducer.mean(), [bestBand]).get('mean')
-);
+  // Generate a mask isolating pixels whose current annual class is eligible for correction
+  var eligibleMask = getClassMask(currentClass, eligibleClasses);
 
-var meanOther = ee.Number(
-  others.reduceColumns(ee.Reducer.mean(), [bestBand]).get('mean')
-);
+  // Intersect the medium-frequency spatial mask with the current eligibility mask
+  var applyMediumFrequencyCorrection = herbaceousMediumFrequencyMask.eq(1).and(eligibleMask);
 
-// Initial midpoint threshold (reference)
-var midThreshold = meanRest.add(meanOther).divide(2);
+  // Intersect the high-frequency spatial mask with the current eligibility mask
+  var applyHighFrequencyCorrection = herbaceousHighFrequencyMask.eq(1).and(eligibleMask);
 
-print('Mean Sandbank veg:', meanRest);
-print('Mean Other:', meanOther);
-print('Midpoint threshold:', midThreshold);
+  // Apply the rules: convert medium frequency pixels to Grassland, and high frequency to Herbaceous Sandbank
+  var corrected = currentClass.where(applyMediumFrequencyCorrection, grasslandClass).where(applyHighFrequencyCorrection, herbaceousSandbankClass).rename(bandName).byte();
 
-// Function to compute optimal threshold using Youden’s J
-function findOptimalThreshold(restList, otherList) {
+  // Return the corrected annual band
+  return corrected;
+};
 
-  restList  = ee.List(restList);
-  otherList = ee.List(otherList);
+// Map the sandbank correction function over all years to process the entire time series
+var correctedBands = years.map(applySandbankCorrection);
 
-  var values = restList.cat(otherList).distinct().sort();
-
-  var stats = values.map(function (th) {
-    th = ee.Number(th);
-
-    var sens = restList.map(function (v) {
-      return ee.Number(v).gt(th);
-    }).reduce(ee.Reducer.mean());
-
-    var spec = otherList.map(function (v) {
-      return ee.Number(v).lte(th);
-    }).reduce(ee.Reducer.mean());
-
-    var J = ee.Number(sens).add(spec).subtract(1);
-
-    return ee.Feature(null, {
-      threshold: th,
-      J: J,
-      sensitivity: sens,
-      specificity: spec
-    });
+// Reconstruct the array of corrected single-band images back into a unified multi-band image
+var finalClassification = ee.ImageCollection
+  .fromImages(correctedBands)
+  .toBands()
+  .rename(bandNames)
+  .set({
+    'filter': '10_sandbank_vegetation',
+    'input_asset': inputFile,
+    'input_version': inputVersion,
+    'output_version': outputVersion,
+    'gtb_asset': gtbAsset,
   });
 
-  return ee.Number(
-    ee.FeatureCollection(stats).sort('J', false).first().get('threshold')
-  );
-}
+// Print the resulting final filtered classification structure to the console
+print('Final classification', finalClassification);
 
-var optimalThreshold = findOptimalThreshold(
-  sandbank.aggregate_array(bestBand),
-  others.aggregate_array(bestBand)
-);
+// Render diagnostic layers to help assess GTB frequency performance
+Map.addLayer(class12Frequency, {min: 0, max: 1, palette: ['ffffff', 'ffff00', 'ff00ff']}, 'GTB class 12 frequency', false);
+Map.addLayer(gtb12HighFrequencyMask.selfMask(), {palette: ['magenta']}, 'GTB class 12 high frequency', false);
+Map.addLayer(gtb12MediumFrequencyMask.selfMask(), {palette: ['orange']}, 'GTB class 12 medium frequency', false);
 
-print('Optimal threshold (Youden J):', optimalThreshold);
+// Render the final combined spatial templates used for actual correction
+Map.addLayer(herbaceousHighFrequencyMask.selfMask(), {palette: ['cyan']}, 'High-frequency Herbaceous mask', false);
+Map.addLayer(herbaceousMediumFrequencyMask.selfMask(), {palette: ['orange']}, 'Medium-frequency Herbaceous mask', false);
 
-// ======================================================================
-// ECOLOGICAL AND GEOLOGICAL CONSTRAINTS
-// ======================================================================
-// HAND (floodplain/wetland proxy)
-var hand = ee.Image('MERIT/Hydro/v1_0_1')
-  .select('hnd')
-  .clip(region1);
-
-// Spectral criterion
-var maskSpectral = embeddings.select(bestBand).gt(optimalThreshold);
-
-// Ecological criterion (low HAND)
-var maskHAND = hand.lt(3); // adjustable threshold
-
-// Geological criterion (coastal deposits)
-var maskCPRM = roiMask;
-
-// Final Sandbank veg mask
-var sandbankMask = maskSpectral
-  .and(maskHAND)
-  .and(maskCPRM)
-  .selfMask();
-
-Map.addLayer(hand, {min: 0, max: 30, palette: ['white', 'blue']}, 'HAND');
-Map.addLayer(sandbankMask, {palette: ['yellow']}, 'Detected Sandbank veg mask');
-
-// Apply sandbank mask to annual classification
-var updatedClassification = ee.Image([]);
-var years = ee.List.sequence(2017, 2024);
-
-years.getInfo().forEach(function (year) {
-
-  var bandName = 'classification_' + year;
-  var original = classificationInput.select(bandName);
-
-  // Eligible classes for conversion to Sandbank vegetation
-  var eligible = original.eq(4)   // Savanna
-    .or(original.eq(11))          // Grassland
-    .or(original.eq(12));         // Wetland
-
-  var updated = original.where(
-    eligible.and(sandbankMask),
-    50
-  );
-
-  updatedClassification = updatedClassification.addBands(
-    updated.rename(bandName)
-  );
-});
-
-Map.addLayer (updatedClassification, vis, 'Updated classification with Sandbank veg');
+// Render the finalized classification map to the display
+Map.addLayer(finalClassification, vis, 'Final classification');
 
 // Export as GEE asset
 Export.image.toAsset({
-  image: updatedClassification,
-  description: inputFile + '_sandbank_v' + outputVersion,
-  assetId: output + inputFile + '_sandbank_v' + outputVersion,
-  pyramidingPolicy: {'.default': 'mode'},
-  region: updatedClassification.geometry(),
+  image: finalClassification,
+  description: inputFile + '_snv_v' + outputVersion,
+  assetId: out + inputFile + '_snv_v' + outputVersion,
+  pyramidingPolicy: {
+    '.default': 'mode'
+  },
+  region: classificationInput.geometry(),
   scale: 10,
   maxPixels: 1e13
 });
-
-
