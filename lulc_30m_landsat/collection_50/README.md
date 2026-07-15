@@ -32,4 +32,4 @@ For detailed information about the classification process and methodology, refer
 - **Step 10**: Apply a frequency-based filter to refine results.
 
 ## Contact
-For clarification or issue/bug reports, please write to <barbara.silva@ipam.org.br and dhemerson.costa@ipam.org.br>
+For clarification or issue/bug reports, please write to <dhemerson.costa@ipam.org.br and barbara.silva@ipam.org.br>
