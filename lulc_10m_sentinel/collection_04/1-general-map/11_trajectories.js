@@ -1,4 +1,4 @@
-// -- -- -- -- 11) trajectories
+// -- -- -- -- 11) Temporal Trajectory
 // This script applies rule-based temporal trajectory filters to stabilize 
 // specific LULC transitions in the Cerrado time series. It corrects spurious 
 // intermediate states (e.g., Grassland acting as a false bridge 
