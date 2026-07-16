@@ -1,49 +1,55 @@
-# --- --- --- 05_rfClassification
-# Perform land use and land cover classification using Random Forest (RF) with multiprobability output
-# Applies trained RF model to annual Satellite Embedding mosaics and exports classification and class probabilities
+# --- --- --- 05) Random Forest Classification
+# This script performs Land Use and Land Cover (LULC) classification focused 
+# on mapping Rocky Outcrop. It rebuilds the annual Google Satellite Embedding 
+# and geomorphometric mosaics, trains a Random Forest (RF) model using the 
+# previously extracted samples (Step 04), and outputs both the discrete 
+# classification map and continuous class probability bands.
 
-# barbara.silva@ipam.org.br
+## Initialization and Imports
+import ee            # Import the Earth Engine API
+import math          # Import math for trigonometric functions
 
-# Read libraries
-import ee
-import sys
-import os
-import re
-import math
-import itertools
-
-# Authenticate and initialize Earth Engine
+# Authenticate the Earth Engine account (required in new environments)
 ee.Authenticate()
-ee.Initialize(project = 'ee-barbaracostamapbiomas') # choose your own project
 
-# Set input and output version
+# Initialize the Earth Engine session with the specified project
+ee.Initialize(project = 'ee-barbarasilvaipam')
+
+## Parameters and Asset Management
+# Define the input version for the training samples
 samples_version = '1'
+
+# Define the output version for the final classification assets
 output_version  = '1'
 
-# Define output folder path
-output_asset = 'projects/mapbiomas-workspace/COLECAO_DEV/COLECAO10_DEV/CERRADO/SENTINEL/C03_ROCKY-MAP-PROBABILITY/'
+# Define the base output folder path for storing the classification assets in GEE
+output_asset = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/SENTINEL/C04_ROCKY-GENERAL-MAP-PROBABILITY/'
 
-# Define the range of years to be processed
-years = list(range(2017, 2025))
+# Define the list of years to be processed
+years = list(range(2017, 2026))
 
-# Define class label dictionary
+# Define a dictionary mapping numeric class IDs to descriptive labels for the probability bands
 classDict = {
-    1: 'Forest',
-    2: 'Shrubby',
-    3: 'Water',
-    4: 'Anthropic',
-    5: 'NonVegetated',
+     1: 'Forest',
+     2: 'Shrubby',
+     3: 'Water',
+     4: 'Anthropic',
+     5: 'NonVegetated',
     29: 'RockyOutcrop'
 }
 
-# Load AOI
-aoi_vec = ee.FeatureCollection('projects/ee-barbarasilvaipam/assets/collection-03_rocky-outcrop/masks/aoi_v1').geometry()
+# Load the Area of Interest (AOI) feature
+aoi_vec = ee.FeatureCollection('projects/ee-barbarasilvaipam/assets/collection-04_rocky-outcrop/masks/aoi_v1').geometry()
+
+# Convert the AOI geometry into a binary image mask
 aoi_img = ee.Image(1).clip(aoi_vec)
 
-# Google Satellite Embedding (Source: https://developers.google.com/earth-engine/datasets/catalog/GOOGLE_SATELLITE_EMBEDDING_V1_ANNUAL?hl=pt-br)
+## Load Base Datasets
+# Define the Earth Engine asset ID for the Google Satellite Embedding dataset
+# Source: https://developers.google.com/earth-engine/datasets/catalog/GOOGLE_SATELLITE_EMBEDDING_V1_ANNUAL?hl=pt-br
 collectionId = 'GOOGLE/SATELLITE_EMBEDDING/V1/ANNUAL'
 
-# Load geomorphometric covariates (Geomorpho 90m - Amatulli et al. 2019)
+# Construct a dictionary containing Geomorpho90m topographic covariates and MERIT DEM
 geomorpho = {
     'dem': ee.Image('MERIT/DEM/v1_0_3').select('dem').toInt64().rename('merit_dem'),
     'aspect': ee.ImageCollection("projects/sat-io/open-datasets/Geomorpho90m/aspect").mosaic().multiply(10000).round().rename('aspect').toInt64(),
@@ -61,107 +67,127 @@ geomorpho = {
     'cti': ee.ImageCollection("projects/sat-io/open-datasets/Geomorpho90m/cti").mosaic().multiply(10000).round().rename('cti').toInt64(),
 }
 
-# Initialize dictionary to store mosaics by year
+# Initialize an empty dictionary to temporarily store computed mosaics by year
 mosaic_dict = {}
 
-# Loop over all years
+## Main Processing Loop
+# Iterate over each year defined in the processing list
 for year in years:
+    # Print a status message indicating the current year
     print(f"--> Processing year: {year}")
 
-    # Compute auxiliary coordinates
+    # Extract pixel latitude and longitude coordinates
     coords = ee.Image.pixelLonLat().clip(aoi_vec)
     lat = coords.select('latitude').add(5).multiply(-1).multiply(1000).toInt16()
     lon_sin = coords.select('longitude').multiply(math.pi).divide(180).sin().multiply(-1).multiply(10000).toInt16().rename('longitude_sin')
     lon_cos = coords.select('longitude').multiply(math.pi).divide(180).cos().multiply(-1).multiply(10000).toInt16().rename('longitude_cos')
 
-## -- -- -- Start of mosaic production
-    # Set time range for mosaic generation
+
+    ## Mosaic Assembly
+
+    # Define the start date based on the current iteration year
     dateStart = ee.Date.fromYMD(year, 1, 1)
+
+    # Define the end date
     dateEnd = dateStart.advance(1, 'year')
 
-    # Filter Emebedding image collection by date and region
-    collection = ee.ImageCollection(collectionId)\
-            .filter(ee.Filter.date(dateStart, dateEnd))\
-            .filter(ee.Filter.bounds(aoi_vec))\
-            .mosaic()
+    # Filter the Google Satellite Embeddings collection by date
+    collection = ee.ImageCollection(collectionId).filter(ee.Filter.date(dateStart, dateEnd)).filter(ee.Filter.bounds(aoi_vec)).mosaic()
 
-    # Generate mosaic using specific criteria
+    # Assign the embedded mosaic as the base image for classification
     mosaic = collection
 
-    # Add auxiliary and geomorphometric variables
+    # Append the processed geographic coordinate bands to the mosaic
     mosaic = mosaic.addBands(lat).addBands(lon_sin).addBands(lon_cos)
+    
+    # Iterate through the geomorphology dictionary and append each topographic band to the mosaic
     for key in geomorpho:
         mosaic = mosaic.addBands(geomorpho[key])
 
-    # Store mosaic in dictionary
+    # Store the assembled multi-band composite in the tracking dictionary
     mosaic_dict[year] = mosaic
 
-    # Convert to int64 to ensure compatibility
+    # Clip the final mosaic to the strict boundaries of the AOI
     mosaic = mosaic.clip(aoi_vec)
+
+    # Scale the mosaic values and round them to ensure numeric consistency
     mosaic = mosaic.multiply(100000).round()
 
-    # Add year
+    # Append a constant band representing the processing year cast as Int16
     mosaic = mosaic.addBands(ee.Image(year).int16().rename('year'))
 
-## -- -- -- End of mosaic production
 
-    # Load training data
-    training_path = f'projects/ee-barbarasilvaipam/assets/collection-03_rocky-outcrop/trainings/v{samples_version}/train_col03_rocky_{year}_v{samples_version}'
+    ## Random Forest Training and Classification 
+    # Construct the exact path to load the corresponding training sample asset for the current year
+    training_path = f'projects/ee-barbarasilvaipam/assets/collection-04_rocky-outcrop/trainings/v{samples_version}/train_col04_rocky_{year}_v{samples_version}'
+    
+    # Load the training samples feature collection
     training = ee.FeatureCollection(training_path)
 
-    # Train Random Forest classifier
+    # Extract the list of all band names present in the mosaic to serve as predictors
     band_names = mosaic.bandNames().getInfo()
+    
+    # Print diagnostic information regarding the predictor bands
     print("Total bands:", mosaic.bandNames().size().getInfo())
-    print("Band names:", mosaic.bandNames().getInfo())
 
+    # Initialize the SmileRandomForest classifier requesting MULTIPROBABILITY output
     classifier = ee.Classifier.smileRandomForest(
-        numberOfTrees= 300,
-        variablesPerSplit= int(math.floor(math.sqrt(len(band_names))))
-    ).setOutputMode('MULTIPROBABILITY') \
-        .train(training, 'class', band_names)
+        # Set the number of decision trees 
+        numberOfTrees = 300,
+        # Set the number of variables per split to the square root of total predictors
+        variablesPerSplit = int(math.floor(math.sqrt(len(band_names))))
+    ).setOutputMode('MULTIPROBABILITY').train(training, 'class', band_names)
 
-    # Classify the image
+    # Apply the trained classifier to the mosaic and mask the result strictly to the AOI boundary
     predicted = mosaic.classify(classifier).updateMask(aoi_img)
 
-    # Format probability output
+
+    ## Probability Formatting
+    # Retrieve an ordered list of all unique class IDs present in the training data
     classes = sorted(training.aggregate_array('class').distinct().getInfo())
 
+    # Flatten the multiprobability array output into individual bands named after the numeric class IDs
     probabilities = predicted.arrayFlatten([list(map(str, classes))])
+    
+    # Look up the descriptive string names for the present class IDs using the dictionary
     new_names = [classDict[int(c)] for c in classes if int(c) in classDict]
+
+    # Rename the numeric probability bands to their corresponding descriptive names
     probabilities = probabilities.select(list(map(str, classes)), new_names)
+
+    # Rescale the 0-1 probability floats to 0-100 integers and cast to Int8 for storage optimization
     probabilities = probabilities.multiply(100).round().toInt8()
 
-    # Get classification band
-    probabilitiesArray = probabilities.toArray() \
-        .arrayArgmax() \
-        .arrayGet([0])
+    # Convert the individual probability bands back to an array to extract the maximum probability index
+    probabilitiesArray = probabilities.toArray().arrayArgmax().arrayGet([0])
 
-    classificationImage = probabilitiesArray.remap(
-        list(range(len(classes))),
-        classes
-    ).rename('classification')
+    # Remap the zero-indexed argmax result back to the original numeric class IDs to form the final discrete map
+    classificationImage = probabilitiesArray.remap(list(range(len(classes))), classes).rename('classification')
 
-    # Combine classification with probabilities
+    # Concatenate the discrete classification band with all the continuous probability bands
     toExport = classificationImage.addBands(probabilities)
 
-    # Set metadata
-    toExport = toExport.set('collection', '10') \
+    # Inject categorical and temporal metadata attributes into the final image before exporting
+    toExport = toExport.set('collection', '04') \
         .set('version', output_version) \
         .set('biome', 'CERRADO') \
-        .set('year', int(year))
+        .set('year', int(year)) \
 
-    # Export to asset
+    # Define the strict filename template for the output asset
     file_name = f'CERRADO_ROCKY_{year}_v{output_version}'
 
+    # Configure the Earth Engine batch export task for the classified image
     task = ee.batch.Export.image.toAsset(
-        image= toExport,
-        description= file_name,
-        assetId= output_asset + file_name,
-        scale= 10,
-        maxPixels= 1e13,
-        pyramidingPolicy= {'.default': 'mode'},
-        region= aoi_img.geometry()
+        image = toExport,
+        description = file_name,
+        assetId = output_asset + file_name,
+        scale = 10,
+        maxPixels = 1e13,
+        pyramidingPolicy = {'.default': 'mode'},
+        region = aoi_img.geometry()
     )
+    
+    # Submit the classification export task to the Earth Engine servers
     task.start()
 
 print('✅ All classification export tasks started. Now wait a few hours and have fun :)')
