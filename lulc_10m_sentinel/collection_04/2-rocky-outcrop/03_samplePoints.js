@@ -37,7 +37,7 @@ var aoi_img = ee.Image(1).clip(aoi_vec);
 var stablePixels = ee.Image('projects/ee-barbarasilvaipam/assets/collection-04_rocky-outcrop/masks/cerrado_rockyTrainingMask_2017_2024_v1').rename('class');
 
 // Load the manually Rocky Outcrop samples
-var rocky_samples = ee.FeatureCollection('projects/ee-barbarasilvaipam/assets/collection-04_rocky-outcrop/C04_rocky-outcrop-collected-v2')
+var rocky_samples = ee.FeatureCollection('projects/ee-barbarasilvaipam/assets/collection-04_rocky-outcrop/C04_rocky-outcrop-collected-v1')
   // Map over the features to append the official MapBiomas class ID (29) and retain only that property
   .map(function(feature) {
     return feature.set({'class': '29'}).select(['class']);
