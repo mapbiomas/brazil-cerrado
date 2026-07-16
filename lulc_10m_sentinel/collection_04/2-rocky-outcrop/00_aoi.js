@@ -1,4 +1,4 @@
-// -- -- -- -- 00_aoiArea
+// -- -- -- -- 00) Area of Interest (AOI) 
 // This script defines the Area of Interest (AOI) for mapping 
 // the Rocky Outcrop class in the Cerrado biome. It calculates a 55 km spatial 
 // buffer around a set of collected Rocky Outcrop samples to restrict 
