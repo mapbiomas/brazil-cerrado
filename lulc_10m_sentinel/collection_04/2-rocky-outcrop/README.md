@@ -57,5 +57,5 @@ Applies a spatial filter to avoid misclassifications at the edge of pixel groups
 Integrates the standalone Rocky Outcrop classification with the main MapBiomas Cerrado native/anthropic LULC map. Rocky Outcrop pixels overwrite any existing class *except* Forest Formation (Class 3). A final post-integration spatial filter is applied to remove tiny, spurious edge artifacts (≤ 6 pixels) caused by the overlap.
 
 ## Classification and methodology
-For detailed information about the classification and methodology, please read the Cerrado biome (MapBiomas 10m Collection 3 BETA) Appendix of the [Algorithm Theoretical Basis Document (ATBD).](https://brasil.mapbiomas.org/en/atbd-entenda-cada-etapa/)
+For detailed information about the classification and methodology, please read the Cerrado biome (MapBiomas 10m Collection 4 BETA) Appendix of the [Algorithm Theoretical Basis Document (ATBD).](https://brasil.mapbiomas.org/en/atbd-entenda-cada-etapa/)
 
