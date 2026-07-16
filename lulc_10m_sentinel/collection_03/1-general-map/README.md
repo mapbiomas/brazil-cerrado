@@ -1,5 +1,5 @@
 ## 01_trainingMask.js
-Build the training mask based on stable pixels from MapBiomas Collection 10 (2016 to 2024), reference maps, and GEDI-based filtering 
+Build the training mask based on stable pixels from MapBiomas 10m Collection 2 Beta (2016 to 2023), reference maps, and GEDI-based filtering 
 ```javascript
 // read training mask
 var trainingMask = ee.Image('projects/mapbiomas-workspace/COLECAO_DEV/COLECAO10_DEV/CERRADO/SENTINEL/masks/cerrado_trainingMask_2016_2023_v2');
