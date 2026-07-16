@@ -1,81 +1,96 @@
-// -- -- -- -- 02_computeProportion
-// compute area by class to be used as reference to estimate samples of rocky outcrop
-// barbara.silva@ipam.org.br
+// -- -- -- -- 02) Compute Area Proportion 
+// This script computes the total area for each LULC class within the stable 
+// pixels mask. The calculated proportions serve as a reference to distribute 
+// and estimate the number of training samples required for the Rocky Outcrop 
+// classification model.
 
-// Output version
-var output_version = '1';
-var input_version = '1';
-
-// Define classes to be assessed
-var classes = [1, 2, 3, 4, 5, 29];
-
-// Output directory
-var dirout = 'projects/ee-barbarasilvaipam/assets/collection-03_rocky-outcrop/sample/area/';
-
-// Read area of interest
-var aoi_vec = ee.FeatureCollection('projects/ee-barbarasilvaipam/assets/collection-03_rocky-outcrop/masks/aoi_v1');
-var aoi_img = ee.Image(1).clip(aoi_vec);
-Map.addLayer(aoi_img, {palette:['red']}, 'Area of Interest');
-
-// Stable pixels from collection 10.0 (2016-2024)
-var stable = ee.Image('projects/ee-barbarasilvaipam/assets/collection-03_rocky-outcrop/masks/cerrado_rockyTrainingMask_2016_2024_v'+input_version);
-
-var pixel_values = stable.reduceRegion({
-    reducer: ee.Reducer.frequencyHistogram(),
-    geometry: aoi_vec.geometry(),
-    scale: 10,
-    maxPixels: 1e14
-});
-print('Stable pixels Histogram:', pixel_values);
-
-// Random color schema  
+// Define visualization parameters 
 var vis = {
-    'min': 1,
-    'max': 29,
-    'palette': ["32a65e","2532e4", "d6bc74", "edde8e", "ffaa5f"]
+  min: 1,
+  max: 5,
+  palette: [ "#32a65e", "#2532e4", "#d6bc74", "#edde8e", "#d4271e"],
 };
 
-Map.addLayer(stable, vis, 'stable pixels');
-print ('stable', stable);
+// Define the output version
+var output_version = '1';
 
-// Define function to compute area (skm)
-var pixelArea = ee.Image.pixelArea().divide(1000000); //km²
+// Define the input version
+var input_version = '1';
 
-// Define a function to get the class area 
-// For AOI region 
+// Define an array with the numeric values of the classes to be assessed
+var classes = [1, 2, 3, 4, 5];
+
+// Define the base output directory path for the area table asset
+var dirout = 'projects/ee-barbarasilvaipam/assets/collection-04_rocky-outcrop/sample/area/';
+
+// Load the Area of Interest (AOI) 
+var aoi_vec = ee.FeatureCollection('projects/ee-barbarasilvaipam/assets/collection-04_rocky-outcrop/masks/aoi_v1');
+
+// Convert the AOI feature into a binary image mask 
+var aoi_img = ee.Image(1).clip(aoi_vec);
+
+// Add the AOI binary mask to the map
+Map.addLayer(aoi_img, {palette: ['red']}, 'Area of Interest', false);
+
+// Load the stable pixels training mask generated in the previous step
+var stable = ee.Image('projects/ee-barbarasilvaipam/assets/collection-04_rocky-outcrop/masks/cerrado_rockyTrainingMask_2017_2024_v' + input_version);
+
+// Compute a frequency histogram of the stable pixels within the AOI to evaluate class distribution
+var pixel_values = stable.reduceRegion({ 
+                    reducer: ee.Reducer.frequencyHistogram(), 
+                    geometry: aoi_vec.geometry(), 
+                    scale: 10, 
+                    maxPixels: 1e14 });
+
+// Print the calculated frequency histogram to the console
+print('Stable pixels Histogram:', pixel_values);
+
+// Render the loaded stable pixels image to the map display
+Map.addLayer(stable, vis, 'Stable pixels');
+
+// Print the stable pixels image metadata to the console
+print('Stable pixels', stable);
+
+// Create an image representing the area of each pixel in square kilometers (km²)
+var pixelArea = ee.Image.pixelArea().divide(1000000);
+
+// Define a function to calculate the area of each target class for a given region feature
 var getArea = function(feature) {
-
-  // Get classification for the region [i]
+  // Clip the stable pixels image to the boundary of the current feature
   var mapbiomas_i = stable.clip(feature);
   
-  // For each class [j]
+  // Iterate over each predefined class value to compute its specific area
   classes.forEach(function(class_j) {
-
-    // Create the reference area
+    // Mask the pixel area image to retain only pixels matching the current target class
     var reference_ij = pixelArea.mask(mapbiomas_i.eq(class_j));
-
-    // Compute area and insert as metadata into the feature 
-    feature = feature.set(String(class_j),
-                         ee.Number(reference_ij.reduceRegion({
-                                      reducer: ee.Reducer.sum(),
-                                      geometry: feature.geometry(),
-                                      scale: 10,
-                                      maxPixels: 1e13,
-                                      tileScale: 4}
-                                    ).get('area'))
-                                    .multiply(10000)
-                                    .round()
-                                    .divide(10000)
-                              ); // End of set
-                          }); // End of class_j function
-  // Return feature
+    
+    // Reduce the masked area image to calculate the total sum within the feature geometry
+    var area = ee.Number(reference_ij.reduceRegion({
+      reducer: ee.Reducer.sum(),
+      geometry: feature.geometry(),
+      scale: 10,
+      maxPixels: 1e13,
+      tileScale: 4
+    // Extract the numeric area value, scale it, round it, and descale to preserve 4 decimal places
+    }).get('area')).multiply(10000).round().divide(10000);
+    
+    // Add the calculated class area as a new property to the feature, keyed by the class ID string
+    feature = feature.set(String(class_j), area);
+  });
+  
+  // Return the fully updated feature containing the area properties
   return feature;
-}; 
+};
 
+// Map the area calculation function over the AOI feature collection
 var computed_obj = aoi_vec.map(getArea);
-print ('Result: ', computed_obj);
 
-// Export computation as GEE asset
-Export.table.toAsset({'collection': computed_obj, 
-                      'description': 'stable_v' + output_version,
-                      'assetId': dirout + 'stable_v' + output_version});
+// Print the final feature collection containing the computed areas to the console
+print('Result:', computed_obj);
+
+// Export as GEE asset
+Export.table.toAsset({
+  'collection': computed_obj, 
+  'description': 'stable_v' + output_version,
+  'assetId': dirout + 'stable_v' + output_version
+});
