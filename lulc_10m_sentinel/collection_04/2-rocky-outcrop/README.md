@@ -1,4 +1,4 @@
-## 00_aoiArea.js
+## 00_aoi.js
 Defines the Area of Interest (AOI) for mapping the rocky outcrop class. It calculates a 55 km spatial buffer around a set of collected samples to restrict the subsequent processing exclusively to relevant regions.
 
 ## 01_trainingMask.js
