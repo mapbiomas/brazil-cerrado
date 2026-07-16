@@ -82,6 +82,6 @@ Applies an Object-Based Image Analysis (OBIA) filter to remove small (<1 ha) and
 Applies a second spatial filter to remove small, isolated patches (Minimum Mappable Unit) and replaces them with the focal mode of a 9x9 pixel neighborhood (~0.25 ha). Specific native classes (Forest Formation (3), Wetland (11), and Water (33)) are protected from this filter to preserve fine ecological features.
 
 ## Classification and methodology
-For detailed information about the classification and methodology, please read the Cerrado biome (MapBiomas 10m Collection 3 BETA) Appendix of the [Algorithm Theoretical Basis Document (ATBD).](https://brasil.mapbiomas.org/en/atbd-entenda-cada-etapa/)
+For detailed information about the classification and methodology, please read the Cerrado biome (MapBiomas 10m Collection 4 BETA) Appendix of the [Algorithm Theoretical Basis Document (ATBD).](https://brasil.mapbiomas.org/en/atbd-entenda-cada-etapa/)
 
 
