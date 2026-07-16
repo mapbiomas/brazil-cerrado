@@ -1,56 +1,61 @@
+### 00_aoiArea.js
+Defines the Area of Interest (AOI) for mapping the rocky outcrop class. It calculates a 55 km spatial buffer around a set of collected samples to restrict the subsequent processing exclusively to relevant regions.
+
 ## 01_trainingMask.js
-Build the training mask based on stable pixels from MapBiomas Collection 10 (2016 to 2024), aggregating in classes: forest (1), herbaceous and shrubby vegetation (2), water and wetland (3), farming (4), non vegetated area (5) and rocky outcrop (29)
+Builds the training mask based on highly stable pixels from the MapBiomas 10m Collection (2017 to 2024), aggregating detailed LULC into broad categories: Forest (1), Herbaceous and Shrubby Vegetation (2), Water and Wetland (3), Farming (4), and Non-Vegetated Area (5).
 ```javascript
 // read training mask
-var trainingMask = ee.Image('projects/ee-barbarasilvaipam/assets/collection-03_rocky-outcrop/masks/cerrado_rockyTrainingMask_2016_2024_v1');
-var vis = {
-    'min': 0,
-    'max': 62,
-    'palette': require('users/mapbiomas/modules:Palettes.js').get('classification8')
-    };
+var trainingMask = ee.Image('projects/ee-barbarasilvaipam/assets/collection-04_rocky-outcrop/masks/cerrado_rockyTrainingMask_2017_2024_v1');
+var vis = { 
+  min: 1, 
+  max: 5, 
+  palette: ["#1f8d49", "#d6bc74", "#2532e4", "#edde8e", "#d4271e"] };
 
 // plot 
-Map.addLayer(trainingMask, vis, 'trainingMask'); 
+Map.addLayer(trainingMask, vis, 'trainingMask');
 ```
-[Link to script](https://code.earthengine.google.com/83d20f92ca428697148c2d0342bfc838)
+[Link to script](https://code.earthengine.google.com/953d647ec041e72869dd68dff38ee932)
 
 ## 02_computeProportion.js
-Calculates the area of forest (1), herbaceous and shrubby vegetation (2), water and wetland (3), farming (4), non vegetated area (5) and rocky outcrop (29). The main objective is to estimate the number of training samples required for each class, ensuring that the distribution of samples adequately reflects the diversity of the regions.
+Calculates the total area of Forest (1), Herbaceous and Shrubby Vegetation (2), Water and Wetland (3), Farming (4), and Non-Vegetated Area (5) within the AOI. The main objective is to estimate the proportional number of training samples required for each class, ensuring the distribution adequately reflects the region's landscape diversity.
 
 ## 03_samplePoints.js
-Uses the stable pixels to categorize 13,000 training samples. These are then combined with samples collected by a specialist for the rock outcrop class. 
+Uses the stable pixels and computed proportions to generate 13,000 stratified random training samples. These automated samples are then merged with the curated samples collected manually by a specialist for the Rocky Outcrop class (29).
 ```javascript
 // read training samples
-var samplePoints = ee.FeatureCollection('projects/ee-barbarasilvaipam/assets/collection-03_rocky-outcrop/sample/points/samplePoints_v1');
+var samplePoints = ee.FeatureCollection('projects/ee-barbarasilvaipam/assets/collection-04_rocky-outcrop/sample/points/samplePoints_v1');
 
 // plot
 Map.addLayer(samplePoints, {}, 'samplePoints');
 ```
-[Link to script](https://code.earthengine.google.com/ae908b9970a65ec0f05c0f6986033a7f)
+[Link to script](https://code.earthengine.google.com/ee818ee2c6ddb07a64d9073f1b205d39)
 
 ## 04_trainingSamples.py
-Use the sample points generated in the previous step to extract the spectral signatures from the Satellite Embedding mosaic for each year.
+Extracts the temporal and geomorphometric signatures for the sample points generated in the previous step. It samples annual Google Satellite Embedding mosaics alongside Geomorpho90m topographic covariates to build the final training datasets.
 ```javascript
 // inspect a sample of the training dataset 
-var trainingPoints = ee.FeatureCollection('projects/ee-barbarasilvaipam/assets/collection-03_rocky-outcrop/trainings/v1/train_col03_rocky_2019_v1');
+var trainingPoints = ee.FeatureCollection('projects/ee-barbarasilvaipam/assets/collection-04_rocky-outcrop/trainings/v1/train_col04_rocky_2019_v1');
 
 // plot
 Map.addLayer(trainingPoints, {}, 'trainingSamples');
 ```
-[Link to script](https://code.earthengine.google.com/29eaaa32d6b38eea4bf693c645f2eb63)
+[Link to script](https://code.earthengine.google.com/804a053db9dc2a7f70a30772d0624c01)
 
 ## 05_rfClassification.py
-Perfoms the model using the Random Forest classifier (ee.Classifier.smileRandomForest()) and subsequently classifies the annual Satellite Embedding mosaics
+Trains a Random Forest classifier (`ee.Classifier.smileRandomForest()`) using the extracted signatures and applies the model to the annual multi-dimensional mosaics. It exports both the discrete predicted class map and continuous multiprobability bands for further refinement.
 
 ## 06_gapFill.js
-No-data values (gaps) due to cloud and/or cloud shadow contaminated pixels in a given image were filled by the temporally nearest future valid classification. If no future valid classification was available, then the no-data value was replaced by its previous valid classification. Therefore, gaps should only remain in the final classified map when a given pixel was consistently classified as no-data throughout the entire temporal series. 
+Fills temporal NoData gaps (caused by severe cloud or shadow contamination) by borrowing valid values from adjacent years. The filter searches forward in time (future years) and then backward (past years), ensuring continuity. Gaps only remain if a pixel was consistently masked throughout the entire temporal series.
 
 ## 07_frequency.js
-The frequency filter was applied exclusively to pixels classified as rocky outcrop for a minimum of 99% of the time series. This frequency filter resulted in a more stable classification of rocky outcrop class.
+Applies a strict geological stability filter exclusively to the Rocky Outcrop class. Because rocky outcrops are stable geological features, this filter requires a pixel to be classified as Rocky Outcrop for a minimum of 99% of the time series to be retained, resulting in a highly stable and reliable mapping of the class.
 
 ## 08_spatial.js
-The spatial filter avoids misclassifications at the edge of pixel groups and was built based on the "connectedPixelCount" function. Native to the GEE platform, this function locates connected components (neighbors) that share the same pixel value. Thus, only pixels that do not share connections to a predefined number of identical neighbors are considered isolated. At least 100 connected pixels are required to reach the minimum connection value. Consequently, the minimum mapping unit is directly affected by the spatial filter applied, and it was defined as twenty pixels (0.2 hectares).
+Applies a spatial filter to avoid misclassifications at the edge of pixel groups using the `connectedPixelCount` function. It enforces a Minimum Mappable Unit (MMU) of 20 connected pixels (~0.5 hectares). Isolated clusters that do not share at least 50 connections with the same class are eliminated and smoothed using the focal mode.
+
+## 09_integration.js
+Integrates the standalone Rocky Outcrop classification with the main MapBiomas Cerrado native/anthropic LULC map. Rocky Outcrop pixels overwrite any existing class *except* Forest Formation (Class 3). A final post-integration spatial filter is applied to remove tiny, spurious edge artifacts (≤ 6 pixels) caused by the overlap.
 
 ## Classification and methodology
-For detailed information about the classification and methodology, please read the Cerrado biome (MapBiomas 10m Collection 3 BETA) Appendix of the [Algorithm Theoretical Basis Document (ATBD).](https://mapbiomas.org/download-dos-atbds)
+For detailed information about the classification and methodology, please read the Cerrado biome (MapBiomas 10m Collection 3 BETA) Appendix of the [Algorithm Theoretical Basis Document (ATBD).](https://brasil.mapbiomas.org/en/atbd-entenda-cada-etapa/)
 
