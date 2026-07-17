@@ -38,6 +38,7 @@ from modules.SmaAndNdfi import *
 from modules.ThreeYearMetrics import *
 from modules import Map
 
+
 ## Parameters and Asset Management
 # Define the input version for the sample points
 samples_version = '17'
@@ -137,9 +138,10 @@ def buildAnnualMosaic(year, region_i):
     collection = collection.map(getNDFI).map(getSEFI).map(getWEFI).map(getFNS)
 
     # Selected spectral indices
-    collection = collection.map(getNDVI).map(getNBR).map(getNDTI).map(getMNDWI) \
-                              .map(getEVI2).map(getGCVI).map(getMSI).map(getMSAVI) \
-                              .map(getTCW).map(getTCA)
+    collection = collection\
+        .map(getNDVI).map(getNBR).map(getMNDWI).map(getPRI).map(getCAI).map(getEVI2)\
+        .map(getGCVI).map(getGRND).map(getMSI).map(getGARI).map(getGNDVI).map(getMSAVI)\
+        .map(getHallCover).map(getHallHeigth)
 
     # Build the final reduced mosaic using percentile combinations
     # NDVI is used as the target band for dry/wet seasonal percentiles
@@ -362,6 +364,9 @@ for region in regions_list:
         task.start()
 
     print('------------> NEXT REGION --------->')
+
+print('✅ All tasks have been started. Now wait a few hours and have fun :)')
+
 
 print('✅ All tasks have been started. Now wait a few hours and have fun :)')
 
