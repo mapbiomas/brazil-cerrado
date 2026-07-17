@@ -185,6 +185,7 @@ def cleanThreeYearDict(mosaic_dict_3yr, year):
     return mosaic_dict_3yr
 
 ## Main Processing Loop
+# Iterate over each unique classification region
 for region_list in regions:
     # Check if region is fully processed
     region_missing = [
@@ -218,11 +219,12 @@ for region_list in regions:
     # Reduced dictionary for trailing 3-year metrics
     mosaic_dict_3yr = {}
 
+    # Iterate over each year
     for year in years:
         asset_id = (dirout +'train_col11_reg' + str(region_list) + '_' + str(year) + '_v' + version_out)
         print('Processing year [', year, ']')
 
-        # Build Base Mosaic & Context
+        # Build Base Mosaic & Context Metrics
         mosaic = buildAnnualMosaic(
             year=year,
             region_i=region_i
@@ -237,7 +239,7 @@ for region_list in regions:
             mosaic_dict_3yr=mosaic_dict_3yr
         )
 
-        # Store reduced annual image for subsequent years only.
+        # Store reduced annual image for subsequent years only
         mosaic_dict_3yr[year] = getThreeYearReducedImage(mosaic)
         mosaic_dict_3yr = cleanThreeYearDict(mosaic_dict_3yr, year)
 
