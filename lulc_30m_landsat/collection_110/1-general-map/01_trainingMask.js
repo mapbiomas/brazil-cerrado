@@ -1,6 +1,6 @@
 // --- --- --- 01) Training Mask by Period
 // Generates robust training masks by overlapping temporal windows.
-// It identifies stable pixels across MapBiomas Collections (8, 9, and 10),
+// It identifies stable pixels across MapBiomas Collections (8, 9, and 10.1),
 // reclassifies them into target broad categories, and sequentially applies 
 // a series of strict ancillary filters (deforestation, slope, regional reference 
 // maps, and vegetation height). Finally, it enforces a Minimum Mappable Unit 
@@ -39,7 +39,7 @@ var periods = [
 ];
 
 // MapBiomas general collections
-var col_10 = ee.Image('projects/mapbiomas-public/assets/brazil/lulc/collection10/mapbiomas_brazil_collection10_integration_v2');
+var col_10 = ee.Image('projects/mapbiomas-public/assets/brazil/lulc/collection10_1/mapbiomas_brazil_collection10_1_coverage_v1');
 var col_9  = ee.Image('projects/mapbiomas-public/assets/brazil/lulc/collection9/mapbiomas_collection90_integration_v1');
 var col_8  = ee.Image('projects/mapbiomas-public/assets/brazil/lulc/collection8/mapbiomas_collection80_integration_v1');
 
