@@ -40,7 +40,7 @@ from modules import Map
 version_in = '14'
 
 # Define the output version for the generated training data
-version_out  = '18'
+version_out  = '17'
 
 # Define output folder path
 dirout = f'projects/mapbiomas-brazil/assets/LAND-COVER/COLLECTION-11/GENERAL/SAMPLES/CERRADO/v{version_out}/'
