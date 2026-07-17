@@ -61,7 +61,7 @@ files = [asset['name'] for asset in files['assets']]
 # Remove the prefix from asset names
 files = [file.replace('projects/earthengine-legacy/assets/', '') for file in files]
 
-# Identify missing assets
+# Generate expected asset list
 expected = [
     (
         f'projects/mapbiomas-brazil/assets/LAND-COVER/COLLECTION-11/GENERAL/SAMPLES/CERRADO/v{version_out}/'
@@ -131,9 +131,11 @@ def get_sample_asset_by_year(year):
 
 # Builds the annual Landsat mosaic with SMA and selected spectral indices.
 def buildAnnualMosaic(year, region_i):
+    # Set the best temporal window for the Cerrado biome
     dateStart = ee.Date.fromYMD(year, 4, 1)
     dateEnd = ee.Date.fromYMD(year, 10, 1)
 
+    # Filter the Landsat composites collection 
     collection = ee.ImageCollection(collectionId) \
         .filter(ee.Filter.date(dateStart, dateEnd)) \
         .filter(ee.Filter.bounds(region_i)) \
@@ -154,6 +156,7 @@ def buildAnnualMosaic(year, region_i):
                               .map(getTCW).map(getTCA)
 
     # Build the final reduced mosaic using percentile combinations
+    # NDVI is used as the target band for dry/wet seasonal percentiles
     mosaic = getMosaic(
         collection=collection,
         dateStart=dateStart,
@@ -168,11 +171,14 @@ def buildAnnualMosaic(year, region_i):
     return mosaic
 
 # Keeps only the two previous years required for trailing three-year metrics
+# Manages memory for trailing three-year metrics by removing years older than (current_year - 2) 
 def cleanThreeYearDict(mosaic_dict_3yr, year):
+    # Identify keys (years) that fall outside the 3-year trailing window
     years_to_remove = [
         y for y in mosaic_dict_3yr.keys()
         if y < year - 2]
-
+    
+    # Delete the obsolete years from the dictionary
     for y in years_to_remove:
         del mosaic_dict_3yr[y]
 
