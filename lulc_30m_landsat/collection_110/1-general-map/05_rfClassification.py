@@ -1,9 +1,10 @@
 # --- --- --- 05) Random Forest Land Cover Classification
 # This script performs Land Use and Land Cover (LULC) classification for the 
 # Brazilian Cerrado using a Random Forest (RF) algorithm. It dynamically 
-# reconstructs the annual Sentinel-based mosaics and geomorphometric covariates, 
+# reconstructs the annual Landsat-based mosaics and geomorphometric covariates, 
 # trains the RF model using the previously extracted samples (Step 4), and outputs 
 # both the discrete classification and continuous class probability bands.
+
 
 ## Initialization and Imports
 import ee            # Import the Earth Engine API
@@ -19,80 +20,63 @@ ee.Authenticate()
 # Initialize the Earth Engine session with the specified project
 ee.Initialize(project = 'ee-ipam')
 
-## Environment and Custom Module Setup
-# Define the repository URL containing the custom mapbiomas mosaic scripts
-REPO_URL = "https://github.com/costa-barbara/mapbiomas-mosaic.git"
+# Clone the GitHub repository with helper functions
+!rm -rf /content/mapbiomas-mosaic
+!git clone https://github.com/costa-barbara/mapbiomas-mosaic.git
+sys.path.append("/content/mapbiomas-mosaic")
 
-# Define the local directory path to clone the repository into
-REPO_DIR = "/content/mapbiomas-mosaic-10m"
+# Clone the MapBiomas GitHub repository to access custom helper functions
+!rm -rf /content/mapbiomas-mosaic
+!git clone https://github.com/costa-barbara/mapbiomas-mosaic.git
+sys.path.append("/content/mapbiomas-mosaic")
 
-# Define the specific Git branch to be used
-BRANCH = "mapbiomas-mosaics-10m"
-
-# Iterate through loaded Python modules to remove previously cached custom modules
-for module_name in list(sys.modules.keys()):
-    if module_name == "modules" or module_name.startswith("modules."):
-        del sys.modules[module_name]
-
-# Remove any previous instances of the repository path from the system path
-sys.path = [p for p in sys.path if p != REPO_DIR]
-
-# Force remove the old local copy of the repository
-!rm -rf /content/mapbiomas-mosaic-10m
-
-# Clone the specific branch of the repository into the defined local folder
-!git clone --branch mapbiomas-mosaics-10m --single-branch https://github.com/costa-barbara/mapbiomas-mosaic.git /content/mapbiomas-mosaic-10m
-
-# Confirm the active branch in the cloned repository
-!git -C /content/mapbiomas-mosaic-10m branch --show-current
-!git -C /content/mapbiomas-mosaic-10m status
-!git -C /content/mapbiomas-mosaic-10m log -1 --oneline
-
-# Add the cloned repository directory to the top of the Python system path
-sys.path.insert(0, REPO_DIR)
-
-# Import custom spectral index functions from the downloaded module
+# Import custom MapBiomas modules for mosaicking and spectral metrics
 from modules.SpectralIndexes import *
+from modules.Miscellaneous import *
+from modules.Mosaic import *
+from modules.SmaAndNdfi import *
+from modules.ThreeYearMetrics import *
+from modules import Map
 
 ## Parameters and Asset Management
-# Define the input version for the training samples
-samples_version = '4'
+# Define the input version for the sample points
+samples_version = '17'
 
-# Define the output version for the final classification assets
-output_version  = '4'
+# Define the output version for the generated training data
+output_version  = '17'
 
-# Define the base output folder path for storing the classification assets in GEE
-output_asset = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/SENTINEL/C04_GENERAL-MAP-PROBABILITY/'
+# Define output folder path
+output_asset = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/LANDSAT/C11-GENERAL-MAP-PROBABILITY/'
 
-# Define the base directory path where the input training samples are stored
-training_dir = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/SENTINEL/trainings/'
+# Training samples path
+training_dir = 'projects/mapbiomas-brazil/assets/LAND-COVER/COLLECTION-11/GENERAL/SAMPLES/CERRADO/'
 
-# Define the list of years to be processed
-years = list(range(2017, 2026))
+# Define the years to classify
+years = list(range(1985, 2026))
 
 # Load the Cerrado classification regions feature collection
-regions_vec = ee.FeatureCollection('projects/ee-ipam-cerrado/assets/ancillary/collection_11_classification_regions_vector')
+regionsCollection = ee.FeatureCollection('projects/ee-ipam-cerrado/assets/ancillary/collection_11_classification_regions_vector')
+regions_list = sorted(regionsCollection.aggregate_array('mapb').distinct().getInfo())
+regions_ic = 'users/dh-conciani/collection7/classification_regions/eachRegion_v2_10m/'
 
-# Extract a sorted list of unique region IDs from the feature collection
-regions_list = sorted(regions_vec.aggregate_array('mapb').distinct().getInfo())
-
-# Retrieve the list of all existing assets currently saved in the output directory
+# List existing output assets
 files = ee.data.listAssets({'parent': output_asset})
-
-# Extract only the asset name strings from the API response
 files = [asset['name'] for asset in files['assets']]
 
-# Strip the legacy prefix from the asset names to standardize the format for comparison
+# Remove the prefix from asset names
 files = [file.replace('projects/earthengine-legacy/assets/', '') for file in files]
 
-# Generate a comprehensive list of all expected output asset names
+# Generate expected asset list
 expected = [
     f"{output_asset}CERRADO_{region}_{year}_v{output_version}"
     for region, year in itertools.product(regions_list, years)
 ]
 
-# Compare expected assets against existing files to identify only the missing tasks
+# Identify missing assets
 missing = [entry for entry in expected if entry not in files]
+missing_set = set(missing)
+
+print('Total missing assets:', len(missing))
 
 # Define a dictionary mapping numeric class IDs to descriptive labels
 classDict = {
@@ -106,202 +90,225 @@ classDict = {
     33: 'Water'
 }
 
-# Define the Earth Engine asset ID for the Google Satellite Embedding dataset
-# Source: https://developers.google.com/earth-engine/datasets/catalog/GOOGLE_SATELLITE_EMBEDDING_V1_ANNUAL?hl=pt-br
-embeddings = 'GOOGLE/SATELLITE_EMBEDDING/V1/ANNUAL'
+# Landsat mosaic parameters
+collectionId = 'LANDSAT/COMPOSITES/C02/T1_L2_32DAY'
+spectralBands = ['blue', 'red', 'green', 'nir', 'swir1', 'swir2']
 
-# Define the target biome to filter the Sentinel mosaics
-biomes = ['CERRADO'];
+# Define spectral endmembers for SMA analysis
+endmembers = ENDMEMBERS['landsat-8']
 
-# Initialize an empty dictionary to temporarily store computed mosaics by year
-mosaic_dict = {}
+# Load ancillary layers
+# Load fire age data from MapBiomas Fire (collection 5)
+fire_age = ee.Image('projects/ee-ipam-cerrado/assets/Collection_11/masks/col5_fire_age')
+
+# Construct a dictionary containing Geomorpho90m topographic covariates and MERIT DEM
+# Source: Amatulli et al. 2019 - https://www.nature.com/articles/s41597-020-0479-6
+geomorpho = {
+    'dem': ee.Image('MERIT/DEM/v1_0_3').select('dem').toInt64().rename('merit_dem'),
+    'aspect': ee.ImageCollection("projects/sat-io/open-datasets/Geomorpho90m/aspect").mosaic().rename('aspect').toInt64(),
+    'convergence': ee.ImageCollection("projects/sat-io/open-datasets/Geomorpho90m/convergence").mosaic().rename('convergence').toInt64(),
+    'roughness': ee.ImageCollection("projects/sat-io/open-datasets/Geomorpho90m/roughness").mosaic().rename('roughness').toInt64(),
+    'eastness': ee.ImageCollection("projects/sat-io/open-datasets/Geomorpho90m/eastness").mosaic().rename('eastness').toInt64(),
+    'northness': ee.ImageCollection("projects/sat-io/open-datasets/Geomorpho90m/northness").mosaic().round().rename('northness').toInt64(),
+    'dxx': ee.ImageCollection("projects/sat-io/open-datasets/Geomorpho90m/dxx").mosaic().rename('dxx').toInt64(),
+    'cti': ee.ImageCollection("projects/sat-io/open-datasets/Geomorpho90m/cti").mosaic().rename('cti').toInt64(),
+}
+
+## Helper Functions
+# Builds the annual Landsat mosaic with SMA and selected spectral indices.
+def buildAnnualMosaic(year, region_i):
+    # Set the best temporal window for the Cerrado biome
+    dateStart = ee.Date.fromYMD(year, 4, 1)
+    dateEnd = ee.Date.fromYMD(year, 10, 1)
+
+    # Filter the Landsat composites collection
+    collection = ee.ImageCollection(collectionId) \
+        .filter(ee.Filter.date(dateStart, dateEnd)) \
+        .filter(ee.Filter.bounds(region_i)) \
+        .select(spectralBands)
+
+    collection = collection.map(
+        lambda image: image.multiply(10000)
+        .copyProperties(image, ['system:time_start', 'system:time_end'])
+    )
+
+    # Apply Spectral Mixture Analysis and indices
+    collection = collection.map(lambda image: getFractions(image, endmembers))
+    collection = collection.map(getNDFI).map(getSEFI).map(getWEFI).map(getFNS)
+
+    # Selected spectral indices
+    collection = collection.map(getNDVI).map(getNBR).map(getNDTI).map(getMNDWI) \
+                              .map(getEVI2).map(getGCVI).map(getMSI).map(getMSAVI) \
+                              .map(getTCW).map(getTCA)
+
+    # Build the final reduced mosaic using percentile combinations
+    # NDVI is used as the target band for dry/wet seasonal percentiles
+    mosaic = getMosaic(
+        collection=collection,
+        dateStart=dateStart,
+        dateEnd=dateEnd,
+        percentileBand='ndvi',
+        percentileDry=25,
+        percentileWet=75,
+        percentileMin=5,
+        percentileMax=95
+    )
+
+    return mosaic
+
+# Keeps only the two previous years required for trailing three-year metrics
+# Manages memory for trailing three-year metrics by removing years older than (current_year - 2) 
+def cleanThreeYearDict(mosaic_dict_3yr, year):
+    # Identify keys (years) that fall outside the 3-year trailing window
+    years_to_remove = [
+        y for y in mosaic_dict_3yr.keys()
+        if y < year - 2
+    ]
+
+    # Delete the obsolete years from the dictionary
+    for y in years_to_remove:
+        del mosaic_dict_3yr[y]
+
+    return mosaic_dict_3yr
+
+# Return the annual training sample asset corresponding to region and year.
+def getTrainingAsset(region, year):
+    return (
+        training_dir
+        + f'v{samples_version}/'
+        + f'train_col11_reg{region}_{year}_v{samples_version}'
+    )
+
+# Applies balancing to the Water class (33) to minimize false positives.
+def balanceTrainingSamples(training_fc):
+
+    # Filter and limit valid water samples based on topographic rules
+    water_samples = (
+        training_fc
+        .filter(ee.Filter.eq('reference', 33))
+        .filter(ee.Filter.eq('hand', 0))
+        .limit(240)
+    )
+
+    non_water_samples = training_fc.filter(
+        ee.Filter.neq('reference', 33)
+    )
+
+    # Merge the balanced water subset back into the main sample pool
+    return non_water_samples.merge(water_samples)
 
 ## Main Processing Loop
-# Iterate over each region ID in the extracted list
+# Iterate over each unique classification region
 for region in regions_list:
-    # Print a status message indicating the current region being processed
-    print(f'Processing region: {region}')
+    print('--------------------------------')
+    print(f'Processing region [{region}]')
 
-    # Filter the regions feature collection to isolate the current region
-    region_i_fc = regions_vec.filter(ee.Filter.eq('mapb', int(region)))
+    # Filter the global missing list to find missing assets specific to this region
+    region_missing = [
+        item for item in missing
+        if re.search(
+            rf"CERRADO_{region}_[0-9]{{4}}_v{output_version}$",
+            item
+        )
+    ]
 
-    # Dissolve the geometry of the current region and set a max error margin to optimize rendering
-    region_i_geom = region_i_fc.geometry().dissolve(maxError=1)
+    if len(region_missing) == 0:
+        print(f'Region {region}: all assets already exist. Skipping region.')
+        continue
 
-    # Create a binary raster mask derived exactly from the bounded geometry
-    region_i_mask = ee.Image.constant(1).clip(region_i_geom).selfMask()
+    print('Missing assets in region:', len(region_missing))
 
-    ## Covariates and Coordinates
+    region_i_vec = (regionsCollection.filter(ee.Filter.eq('mapb', region)).first().geometry())
+    region_i_ras = ee.Image(regions_ic + 'reg_' + str(region))
+
     # Extract pixel latitude and longitude coordinates
-    geo_coordinates = ee.Image.pixelLonLat().clip(region_i_geom)
+    coords = ee.Image.pixelLonLat().clip(region_i_vec)
 
     # Compute auxiliary coordinates
-    coords = ee.Image.pixelLonLat().clip(region_i_geom)
-    lat = coords.select('latitude').add(5).multiply(-1).multiply(1000).toInt16()
+    lat = coords.select('latitude').add(5).multiply(-1).multiply(1000).toInt16().rename('latitude')
     lon_sin = coords.select('longitude').multiply(math.pi).divide(180).sin().multiply(-1).multiply(10000).toInt16().rename('longitude_sin')
     lon_cos = coords.select('longitude').multiply(math.pi).divide(180).cos().multiply(-1).multiply(10000).toInt16().rename('longitude_cos')
+    hand = ee.ImageCollection("users/gena/global-hand/hand-100").mosaic().toInt16().clip(region_i_vec).rename('hand')
 
-    # Construct a dictionary containing Geomorpho90m topographic covariates and MERIT DEM
-    # Source: Amatulli et al. 2019 - https://www.nature.com/articles/s41597-020-0479-6
-    geomorpho = {
-        'dem': ee.Image('MERIT/DEM/v1_0_3').select('dem').toInt64().rename('merit_dem'),
-        'aspect': ee.ImageCollection("projects/sat-io/open-datasets/Geomorpho90m/aspect").mosaic().multiply(10000).round().rename('aspect').toInt64(),
-        'convergence': ee.ImageCollection("projects/sat-io/open-datasets/Geomorpho90m/convergence").mosaic().multiply(10000).round().rename('convergence').toInt64(),
-        'pcurv': ee.ImageCollection("projects/sat-io/open-datasets/Geomorpho90m/pcurv").mosaic().multiply(10000).round().rename('pcurv').toInt64(),
-        'tcurv': ee.ImageCollection("projects/sat-io/open-datasets/Geomorpho90m/tcurv").mosaic().multiply(10000).round().rename('tcurv').toInt64(),
-        'roughness': ee.ImageCollection("projects/sat-io/open-datasets/Geomorpho90m/roughness").mosaic().multiply(10000).round().rename('roughness').toInt64(),
-        'eastness': ee.ImageCollection("projects/sat-io/open-datasets/Geomorpho90m/eastness").mosaic().multiply(10000).round().rename('eastness').toInt64(),
-        'northness': ee.ImageCollection("projects/sat-io/open-datasets/Geomorpho90m/northness").mosaic().multiply(10000).round().rename('northness').toInt64(),
-        'dxx': ee.ImageCollection("projects/sat-io/open-datasets/Geomorpho90m/dxx").mosaic().multiply(10000).round().rename('dxx').toInt64(),
-        'cti': ee.ImageCollection("projects/sat-io/open-datasets/Geomorpho90m/cti").mosaic().multiply(10000).round().rename('cti').toInt64(),
-    }
+    # Reduced dictionary for trailing 3-year metrics
+    mosaic_dict_3yr = {}
 
-    # Identify exactly which expected output files are missing for the current region
-    missing_i = [item for item in missing if re.search(rf"CERRADO_{region}_[0-9]{{4}}_v{output_version}$", item)]
-
-    # Iterate through the list of years to reconstruct the mosaic and classify
+    # Iterate over each year
     for year in years:
-        # Print a sub-status message indicating the current year
-        print(f'----> Processing: {year}')
+        # Define the strict filename template for the output asset
+        file_name = f'CERRADO_{region}_{year}_v{output_version}'
+        asset_id = output_asset + file_name
 
-        ## Mosaic Assembly
-        # Define the start date based on the current iteration year
-        dateStart = ee.Date.fromYMD(year, 1, 1)
+        print(f'----> {year}')
 
-        # Define the end date exactly one year after the start date
-        dateEnd = dateStart.advance(1, 'year')
+        # Build Base Mosaic & Context Metrics
+        mosaic = buildAnnualMosaic(
+            year = year,
+            region_i = region_i_vec
+        )
 
-        # Filter and mosaic the Google Satellite Embeddings for the specific year and region
-        emb_mosaic = ee.ImageCollection(embeddings)\
-                        .filter(ee.Filter.date(dateStart, dateEnd))\
-                        .filterBounds(region_i_geom)\
-                        .mosaic()
+        mosaic = getStructuralContext(mosaic)
 
-        # Conditionally process Sentinel mosaics depending on the year
-        if year <= 2023:
-            # Load, filter, and mosaic the standard Sentinel source up to 2023
-            sentinel_source = ee.ImageCollection("projects/mapbiomas-mosaics/assets/SENTINEL/BRAZIL/mosaics-3") \
-                                .filter(ee.Filter.inList('biome', biomes))\
-                                .filter(ee.Filter.eq('year', year))\
-                                .filter(ee.Filter.bounds(region_i_geom))\
-                                .mosaic()
-        else:
-            # Extract the band names from the 2023 baseline to standardize the newer collection
-            ref_bands = (
-                    ee.ImageCollection("projects/mapbiomas-mosaics/assets/SENTINEL/BRAZIL/mosaics-3")
-                    .filter(ee.Filter.inList('biome', biomes))
-                    .filter(ee.Filter.eq('year', 2023))
-                    .first()
-                    .bandNames()
-                )
-            
-            # Load, filter, and mosaic the new MapBiomas2 Sentinel source and force band selection consistency
-            sentinel_source = ee.ImageCollection("projects/nexgenmap/MapBiomas2/SENTINEL/mosaics-3") \
-                                .filter(ee.Filter.inList('biome', biomes))\
-                                .filter(ee.Filter.eq('year', year))\
-                                .filter(ee.Filter.bounds(region_i_geom))\
-                                .mosaic()\
-                                .select(ref_bands)
+        # Add trailing three-year temporal metrics
+        mosaic = addThreeYearMetrics(
+            year=year,
+            mosaic=mosaic,
+            mosaic_dict_3yr=mosaic_dict_3yr
+        )
 
-        # print(f"Number of Images ", (sentinel_source).aggregate_array('year').size().getInfo())
+        # Store reduced annual image for subsequent years only
+        mosaic_dict_3yr[year] = getThreeYearReducedImage(mosaic)
+        mosaic_dict_3yr = cleanThreeYearDict(mosaic_dict_3yr, year)
 
-        # Assign the computed Sentinel source to the main mosaic variable
-        mosaic = sentinel_source
+        # Skip export if asset already exists (but we had to process the image for the 3-year temporal lag)
+        if asset_id not in missing_set:
+            print('Asset already exists. Temporal image stored, export skipped.')
+            continue
 
-        # Define the list of suffixes used in the Sentinel mosaic bands representing different temporal aggregates
-        suffixes = ['median', 'median_dry', 'median_wet', 'stdDev']
+        # Append the Coordinates bands and other ancillary to the main mosaic
+        mosaic = getSlope(mosaic)
 
-        # Define a helper function to isolate and strip suffixes for index calculation
-        def rename_bands_for_suffix(image, suffix):
-          bands = image.bandNames()
-          bands_with_suffix = bands.map(lambda b: ee.String(b)).filter(ee.Filter.stringEndsWith('item', f'_{suffix}'))
-          renamed_bands = bands_with_suffix.map(lambda b: ee.String(b).replace(f'_{suffix}', ''))
-          image = image.select(bands_with_suffix, renamed_bands)
-          return image
-
-        # Define a helper function to compute all spectral indices across all suffixes
-        def apply_indices_all_suffixes(image):
-          all_suffix_images = []
-          for suffix in suffixes:
-              img_suffix = rename_bands_for_suffix(image, suffix)
-
-              # Apply all custom spectral index functions imported from the MapBiomas module
-              img_suffix = getNDVI(img_suffix)
-              img_suffix = getMNDWI(img_suffix)
-              img_suffix = getPRI(img_suffix)
-              img_suffix = getCAI(img_suffix)
-              img_suffix = getEVI2(img_suffix)
-              img_suffix = getGCVI(img_suffix)
-              img_suffix = getGRND(img_suffix)
-              img_suffix = getMSI(img_suffix)
-              img_suffix = getGARI(img_suffix)
-              img_suffix = getGNDVI(img_suffix)
-              img_suffix = getMSAVI(img_suffix)
-              img_suffix = getHallCover(img_suffix)
-              img_suffix = getHallHeigth(img_suffix)
-              img_suffix = getTGSI(img_suffix)
-              img_suffix = getNDVIRED(img_suffix)
-              img_suffix = getVI700(img_suffix)
-              img_suffix = getIRECI(img_suffix)
-              img_suffix = getCIRE(img_suffix)
-              img_suffix = getTCARI(img_suffix)
-              img_suffix = getSFDVI(img_suffix)
-              img_suffix = getNDRE(img_suffix)
-
-              # Re-attach the suffix to the newly calculated index bands to avoid name conflicts
-              img_suffix = img_suffix.rename(img_suffix.bandNames().map(lambda b: ee.String(b).cat(f'_{suffix}')))
-              all_suffix_images.append(img_suffix)
-
-          # Concatenate all processed suffix image bands into a single image
-          return ee.Image.cat(all_suffix_images)
-
-        # Apply the indices calculation function to the base mosaic
-        mosaic = apply_indices_all_suffixes(mosaic)
-
-        # Append the Google Embeddings and coordinate bands to the main mosaic
-        mosaic = mosaic.addBands(emb_mosaic).addBands(lat).addBands(lon_sin).addBands(lon_cos)
+        mosaic = mosaic.addBands(lat).addBands(lon_sin).addBands(lon_cos).addBands(hand) \
+                        .addBands(fire_age.select(f'classification_{year}').rename('fire_age').clip(region_i_vec))
 
         # Iterate through the geomorphology dictionary and append each band to the mosaic
         for key in geomorpho:
             mosaic = mosaic.addBands(geomorpho[key])
-
-        # Store the fully assembled mosaic in the tracking dictionary
-        mosaic_dict[year] = mosaic
-
-        # Convert to int64 to minimize storage size
-        mosaic = mosaic.multiply(100000).round().unmask(0)
-
-        # Append a constant band representing the processing year
+        
+        # Final Formatting
+        mosaic = mosaic.multiply(100).round().toInt32()
         mosaic = mosaic.addBands(ee.Image(year).int16().rename('year'))
+        mosaic = mosaic.clip(region_i_vec)
 
-        # Clip the final multi-band composite to the boundaries of the current region
-        mosaic = mosaic.clip(region_i_geom)
+        # Fetch the previously created training FeatureCollection for a specific region
+        training_asset = getTrainingAsset(region, year)
+        training_fc = ee.FeatureCollection(training_asset)
+
+        # Apply the balancing for the water class
+        training_ij = balanceTrainingSamples(training_fc)
 
         ## Random Forest Training and Classification
-        # Load the specific training samples feature collection for the current region and year
-        training_ij = ee.FeatureCollection(training_dir + f'v{samples_version}/train_col04_reg{region}_{year}_v{samples_version}')\
-
         # Extract the list of all band names present in the mosaic to serve as predictors
         bandNames_list = mosaic.bandNames().getInfo()
-        print("Total bands:", mosaic.bandNames().size().getInfo())
+        print('Total bands:', len(bandNames_list))
 
         # Initialize the SmileRandomForest classifier requesting MULTIPROBABILITY output
         classifier = ee.Classifier.smileRandomForest(
-            # Set the number of decision trees
-            numberOfTrees = 300, 
-            # Set the number of variables per split
-            variablesPerSplit = int(math.floor(math.sqrt(len(bandNames_list)))) 
-            ).setOutputMode('MULTIPROBABILITY') \
-            .train(training_ij, 'reference', bandNames_list)
-
+                # Set the number of decision trees
+                numberOfTrees=300,
+                # Set the number of variables per split
+                variablesPerSplit=int( math.floor(math.sqrt(len(bandNames_list))))
+                ).setOutputMode('MULTIPROBABILITY') \
+                .train(training_ij, 'reference', bandNames_list)
+        
         # Apply the trained classifier to the mosaic and mask the result strictly to the region boundary
-        predicted = mosaic.classify(classifier).updateMask(region_i_mask)
+        predicted = (mosaic.classify(classifier).updateMask(region_i_ras))
 
         ## Probability Flattening and Discrete Class Mapping
         # Retrieve an ordered list of all unique class IDs present in the training data
         classes = sorted(training_ij.aggregate_array('reference').distinct().getInfo())
 
-        # Flatten the multiprobability array output into individual bands named after the numeric class IDs
+        # Flatten the multiprobability array output into individual bands named after the numeric class IDs        
         probabilities = predicted.arrayFlatten([list(map(str, classes))])
 
         # Look up the descriptive string names for the present class IDs using the dictionary
@@ -322,36 +329,39 @@ for region in regions_list:
         classificationImage = probabilitiesArray.remap(
             list(range(len(classes))),
             classes
-        ).rename('classification')
-
+        ).rename('classification').toInt8()
+        
         # Concatenate the discrete classification band with all the continuous probability bands
         toExport = classificationImage.addBands(probabilities)
 
         # Set metadata attributes into the final image before exporting
-        toExport = toExport.set('collection', '04')\
-            .set('version', output_version)\
-            .set('biome', 'CERRADO')\
-            .set('mapb', int(region))\
+        toExport = (
+            toExport
+            .set('collection', '11')
+            .set('version', output_version)
+            .set('biome', 'CERRADO')
+            .set('mapb', int(region))
             .set('year', int(year))
+            .set('samples_version', samples_version)
+        )
 
         # Define the strict filename template for the output asset
         file_name = f'CERRADO_{region}_{year}_v{output_version}'
 
-        # Configure the Earth Engine batch export task for the classified image
         task = ee.batch.Export.image.toAsset(
             image = toExport,
             description = file_name,
-            assetId = output_asset + file_name,
-            scale = 10,
+            assetId = asset_id,
+            scale = 30,
             maxPixels = 1e13,
             pyramidingPolicy = {'.default': 'mode'},
-            region = region_i_geom,
-            overwrite = True
+            region = region_i_ras.geometry()
         )
 
         # Submit the classification export task to the Earth Engine servers
         task.start()
 
-    print ('------------> NEXT REGION --------->')
+    print('------------> NEXT REGION --------->')
 
 print('✅ All tasks have been started. Now wait a few hours and have fun :)')
+
