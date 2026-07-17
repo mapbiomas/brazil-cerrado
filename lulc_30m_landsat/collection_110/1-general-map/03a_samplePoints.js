@@ -123,6 +123,7 @@ periods.forEach(function(period) {
       classValues: classes,
       classPoints: [nForest, nSavanna, nWetland, nGrassland, nPasture, nAgriculture, nNonVegetated, nWater]
     });
+
     
     // Map over the generated points to append the region id ('mapb') as a property
     return samples.map(function(f) {
@@ -135,6 +136,17 @@ periods.forEach(function(period) {
   
   // Print diagnosis for each period
   print('Total stratified points ' + period.name, samplePoints.size());
+ 
+  // Print diagnosis for each class
+  print('forest ' + period, samplePoints.filterMetadata('reference', 'equals', 3).size());
+  print('savanna ' + period, samplePoints.filterMetadata('reference', 'equals', 4).size());
+  print('wetland ' + period, samplePoints.filterMetadata('reference', 'equals', 11).size());
+  print('grassland ' + period, samplePoints.filterMetadata('reference', 'equals', 12).size());
+  print('pasture ' + period, samplePoints.filterMetadata('reference', 'equals', 15).size());
+  print('agriculture ' + period, samplePoints.filterMetadata('reference', 'equals', 18).size());
+  print('nonVegetated ' + period, samplePoints.filterMetadata('reference', 'equals', 25).size());
+  print('water ' + period, samplePoints.filterMetadata('reference', 'equals', 33).size());
+ 
   Map.addLayer(samplePoints, {}, 'Stratified Points ' + period.name, false);
 
   // Export as GEE asset
