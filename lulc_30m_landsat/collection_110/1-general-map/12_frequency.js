@@ -21,14 +21,14 @@ var vis = {
 var inputVersion = '4';
 
 // Define the output version
-var outputVersion = '2';
+var outputVersion = '5';
 
 // Define the base directory
-var root = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/SENTINEL/C04-POST-CLASSIFICATION/';
-var out = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/SENTINEL/C04-POST-CLASSIFICATION/';
+var root = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/LANDSAT/C11-POST-CLASSIFICATION/';
+var out = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/LANDSAT/C11-POST-CLASSIFICATION/';
 
 // Construct the base name of the input file
-var inputFile = 'CERRADO_C04_gapfill_v3_spt_v1_tp_v3_tra_v2_snv_v3_traj_v' + inputVersion;
+var inputFile = 'CERRADO_C11_gapfill_v17_spt_v2_tp_v2_tra_v5_snv_v3_traj_v' + inputVersion;
 
 // Load the classification multi-band image
 var classificationInput = ee.Image(root + inputFile);
@@ -36,7 +36,7 @@ print('Input classification', classificationInput);
 Map.addLayer(classificationInput, vis, 'Input classification', false);
 
 // Set the starting and ending year of the processing time-series
-var startYear = 2017;
+var startYear = 1985;
 var endYear = 2025;
 
 // Define an array of native vegetation class IDs targeted for stabilization
@@ -53,11 +53,11 @@ var sandbankClass = 50;
 var stableNativeThreshold = 95;
 
 // Set the specific frequency threshold (%) required
-var savannaThreshold = 60;    // Savanna > 60%   (~5 years)
-var sandbankThreshold = 50;   // Sandbank >= 50% (~4 years)
-var grasslandThreshold = 40;  // Grassland > 40% (~3 years)
-var wetlandThreshold = 95;    // Wetland >= 95%  (~8 years)
-var forestThreshold = 70;     // Forest >= 70%   (~6 years)
+var savannaThreshold = 40;    // Savanna > 40%   (~16 years)
+var sandbankThreshold = 60;   // Sandbank >= 60% (~24 years)
+var grasslandThreshold = 50;  // Grassland > 50% (~20 years)
+var wetlandThreshold = 40;    // Wetland >= 60%  (~24 years)
+var forestThreshold = 60;     // Forest >= 60%   (~24 years)
 
 // Define a function to generate a client-side array of sequential years
 var makeYearList = function(startYear, endYear) {
@@ -253,7 +253,6 @@ Export.image.toAsset({
     '.default': 'mode'
   },
   region: classificationInput.geometry(),
-  scale: 10,
+  scale: 30,
   maxPixels: 1e13
 });
-
