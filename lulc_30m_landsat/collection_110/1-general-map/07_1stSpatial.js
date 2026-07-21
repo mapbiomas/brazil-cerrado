@@ -15,17 +15,17 @@ var vis = {
 };
 
 // Define the input version
-var inputVersion = '3';
+var inputVersion = '17';
 
 // Define the output version
-var outputVersion = '1';
+var outputVersion = '2';
 
 // Define the base directory
-var root = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/SENTINEL/C04-POST-CLASSIFICATION/';
-var out = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/SENTINEL/C04-POST-CLASSIFICATION/';
+var root = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/LANDSAT/C11-POST-CLASSIFICATION/';
+var out = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/LANDSAT/C11-POST-CLASSIFICATION/';
 
 // Construct the base name of the input file
-var inputFile = 'CERRADO_C04_gapfill_v' + inputVersion;
+var inputFile = 'CERRADO_C11_gapfill_v' + inputVersion;
 
 // Load the classification multi-band image
 var inputClassification = ee.Image(root + inputFile);
@@ -34,17 +34,17 @@ Map.addLayer (inputClassification, vis, 'Input Classification');
 
 // Spatial Filter Parameters
 // Set the native processing scale in meters (Sentinel spatial resolution)
-var nativeScale = 10; 
+var nativeScale = 30; 
 
-// Set the minimum mapped unit in number of pixels (~0.5 hectare at 10m scale)
-var minMappedPixels = 50;
+// Set the minimum mapped unit in number of pixels (~1 hectare at 30m scale)
+var minMappedPixels = 11;
 
 // Define an array of classes protected from the spatial filter
 // 3: Forest, 11: Wetland, 33: Water
 var protectedClasses = [3, 11, 33]; 
 
 // Set the starting and ending years 
-var startYear = 2017;
+var startYear = 1985;
 var endYear = 2025;
 
 // Define a function to generate a client-side array of sequential years
@@ -82,11 +82,11 @@ var applySpatialFilter = function(image, kernelRadius) {
     scale: nativeScale
   });
 
-  // Count connected pixels allowing diagonal connectivity (8-neighbor rule) up to a 120-pixel limit
-  var connected8 = imageAtNativeScale.connectedPixelCount(120, true);
+  // Count connected pixels allowing diagonal connectivity (8-neighbor rule) up to a 50-pixel limit
+  var connected8 = imageAtNativeScale.connectedPixelCount(50, true);
 
-  // Count connected pixels strictly horizontally and vertically (4-neighbor rule) up to a 120-pixel limit
-  var connected4 = imageAtNativeScale.connectedPixelCount(120, false);
+  // Count connected pixels strictly horizontally and vertically (4-neighbor rule) up to a 50-pixel limit
+  var connected4 = imageAtNativeScale.connectedPixelCount(50, false);
 
   // Compute the focal mode (majority value) using a square kernel (radius 4 yields a 9x9 pixel window)
   var modeImage = image.focalMode(kernelRadius, 'square', 'pixels');
@@ -187,6 +187,6 @@ Export.image.toAsset({
     'assetId': out +  inputFile + '_spt_v' + outputVersion,
     'pyramidingPolicy': {'.default': 'mode'},
     'region': finalImage.geometry(),
-    'scale': 10,
+    'scale': 30,
     'maxPixels': 1e13
 });
