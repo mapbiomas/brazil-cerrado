@@ -15,17 +15,17 @@ var vis = {
 };
 
 // Define the input version
-var inputVersion = '3';
+var inputVersion = '2';
 
 // Define the output version
-var outputVersion = '2';
+var outputVersion = '5';
 
 // Define the base directory
-var root = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/SENTINEL/C04-POST-CLASSIFICATION/';
-var out = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/SENTINEL/C04-POST-CLASSIFICATION/';
+var root = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/LANDSAT/C11-POST-CLASSIFICATION/';
+var out = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/LANDSAT/C11-POST-CLASSIFICATION/';
 
 // Construct the base name of the input file
-var inputFile = 'CERRADO_C04_gapfill_v3_spt_v1_tp_v' + inputVersion;
+var inputFile = 'CERRADO_C11_gapfill_v17_spt_v2_tp_v' + inputVersion;
 
 // Load the classification multi-band image
 var classificationInput = ee.Image(root + inputFile);
@@ -33,14 +33,14 @@ print('Input classification', classificationInput);
 Map.addLayer(classificationInput, vis, 'Input classification', false);
 
 // Set the starting and ending year of the processing time-series
-var startYear = 2017;
+var startYear = 1985;
 var endYear   = 2025;
 
 // Set the maximum transition patch size in pixels (25 pixels at 10m scale is ~0.25 ha)
-var maxPatchPixels = 25;
+var maxPatchPixels = 6;
 
 // Set the maximum connected-pixel search size for performance optimization
-var connectedPixelMaxSize = 120;
+var connectedPixelMaxSize = 30;
 
 // Set transition patch connectivity rule (true allows diagonal 8-neighbor connections)
 var useDiagonalConnectivity = true;
@@ -179,6 +179,6 @@ Export.image.toAsset({
   assetId: out + inputFile + '_tra_v' + outputVersion,
   pyramidingPolicy: {'.default': 'mode'},
   region: classificationInput.geometry(),
-  scale: 10,
+  scale: 30,
   maxPixels: 1e13
 });
