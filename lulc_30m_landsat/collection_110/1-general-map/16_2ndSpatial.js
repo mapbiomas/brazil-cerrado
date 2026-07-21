@@ -15,17 +15,17 @@ var vis = {
 };
 
 // Define the input version
-var inputVersion = '1';
+var inputVersion = '5';
 
 // Define the output version
-var outputVersion = '1';
+var outputVersion = '5';
 
 // Define the base directory
-var root = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/SENTINEL/C04-POST-CLASSIFICATION/';
-var out = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/SENTINEL/C04-POST-CLASSIFICATION/';
+var root = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/LANDSAT/C11-POST-CLASSIFICATION/';
+var out = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/LANDSAT/C11-POST-CLASSIFICATION/';
 
 // Construct the base name of the input file
-var inputFile = 'CERRADO_C04_gapfill_v3_spt_v1_tp_v3_tra_v2_snv_v3_traj_v4_freq_v2_temp_v2_freg_v3_shp_v' + inputVersion;
+var inputFile = 'CERRADO_C11_gapfill_v17_spt_v2_tp_v2_tra_v5_snv_v3_traj_v4_freq_v5_temp_v11_freg_v44_silv_v11_shp_v' + inputVersion;
 
 // Load the classification multi-band image
 var inputClassification = ee.Image(root + inputFile);
@@ -34,17 +34,17 @@ Map.addLayer (inputClassification, vis, 'Input Classification');
 
 // Spatial Filter Parameters
 // Set the native processing scale in meters (Sentinel spatial resolution)
-var nativeScale = 10; 
+var nativeScale = 30; 
 
 // Set the minimum mapped unit in number of pixels (~0.25 hectare at 10m scale)
-var minMappedPixels = 25;
+var minMappedPixels = 11;
 
 // Define an array of classes protected from the spatial filter
 // 3: Forest, 11: Wetland, 33: Water
 var protectedClasses = [3, 11, 33]; 
 
 // Set the starting and ending years 
-var startYear = 2017;
+var startYear = 1985;
 var endYear = 2025;
 
 // Define a function to generate a client-side array of sequential years
@@ -187,6 +187,6 @@ Export.image.toAsset({
     'assetId': out +  inputFile + '_spt_v' + outputVersion,
     'pyramidingPolicy': {'.default': 'mode'},
     'region': finalImage.geometry(),
-    'scale': 10,
+    'scale': 30,
     'maxPixels': 1e13
 });
