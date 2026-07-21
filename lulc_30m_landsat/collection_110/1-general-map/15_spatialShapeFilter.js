@@ -10,21 +10,21 @@
 // Define visualization parameters
 var vis = {
   min: 0,
-  max: 62,
-  palette: require('users/mapbiomas/modules:Palettes.js').get('classification8'),
+  max: 75,
+  palette: require('users/mapbiomas/modules:Palettes.js').get('brazil'),
   bands: 'classification_2018'
 };
 
 // Set root directory
-var root = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/SENTINEL/C04-POST-CLASSIFICATION/';
-var out = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/SENTINEL/C04-POST-CLASSIFICATION/';
+var root = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/LANDSAT/C11-POST-CLASSIFICATION/';
+var out = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/LANDSAT/C11-POST-CLASSIFICATION/';
 
 // Set metadata
-var inputVersion = '3';
-var outputVersion = '1';
+var inputVersion = '11';
+var outputVersion = '5';
 
 // Set input classification
-var inputFile = 'CERRADO_C04_gapfill_v3_spt_v1_tp_v3_tra_v2_snv_v3_traj_v4_freq_v2_temp_v2_freg_v'+inputVersion;
+var inputFile = 'CERRADO_C11_gapfill_v17_spt_v2_tp_v2_tra_v5_snv_v3_traj_v4_freq_v5_temp_v11_freg_v44_silv_v'+inputVersion;
 
 // Load the classification multi-band image
 var classificationInput = ee.Image(root + inputFile);
@@ -32,7 +32,7 @@ print('Input classification', classificationInput);
 Map.addLayer(classificationInput, vis, 'Input classification', false);
 
 // Set the starting and ending year of the processing time-series
-var startYear = 2017;
+var startYear = 1985;
 var endYear = 2025;
 
 // Generate a sequential list of all years evaluated in the time series
@@ -42,7 +42,7 @@ var years = ee.List.sequence(startYear, endYear);
 var targetClass = 21;
 
 // Set the maximum patch size threshold in hectares (patches larger than this are ignored)
-var maxPatchHa = 1.0;
+var maxPatchHa = 3.0;
 
 // Set the maximum connected-object size in pixels for the algorithm 
 // 128 pixels safely covers 1 ha at 10m scale
@@ -251,7 +251,6 @@ Export.image.toAsset({
   assetId: out + inputFile + '_shp_v' + outputVersion,
   pyramidingPolicy: {'.default': 'mode'},
   region: classificationInput.geometry(),
-  scale: 10,
+  scale: 30,
   maxPixels: 1e13
 });
-
