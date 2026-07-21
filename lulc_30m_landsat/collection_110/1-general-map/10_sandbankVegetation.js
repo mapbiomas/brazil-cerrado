@@ -17,17 +17,17 @@ var vis = {
 var maskVis = { min: 0, max: 1, palette: ['ffffff', 'ff00ff'] };
 
 // Define the input version
-var inputVersion = '2';
+var inputVersion = '5';
 
 // Define the output version
 var outputVersion = '3';
 
 // Define the base directory
-var root = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/SENTINEL/C04-POST-CLASSIFICATION/';
-var out = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/SENTINEL/C04-POST-CLASSIFICATION/';
+var root = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/LANDSAT/C11-POST-CLASSIFICATION/';
+var out = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/LANDSAT/C11-POST-CLASSIFICATION/';
 
 // Construct the base name of the input file
-var inputFile = 'CERRADO_C04_gapfill_v3_spt_v1_tp_v3_tra_v' + inputVersion;
+var inputFile = 'CERRADO_C11_gapfill_v17_spt_v2_tp_v2_tra_v' + inputVersion;
 
 // Load the classification multi-band image
 var classificationInput = ee.Image(root + inputFile);
@@ -35,7 +35,7 @@ print('Input classification', classificationInput);
 Map.addLayer(classificationInput, vis, 'Input classification', false);
 
 // Set the starting and ending year of the processing time-series
-var startYear = 2017;
+var startYear = 1985;
 var endYear = 2025;
 
 // Set the high-frequency temporal threshold above which pixels are remapped to Herbaceous Sandbank
@@ -190,6 +190,6 @@ Export.image.toAsset({
     '.default': 'mode'
   },
   region: classificationInput.geometry(),
-  scale: 10,
+  scale: 30,
   maxPixels: 1e13
 });
