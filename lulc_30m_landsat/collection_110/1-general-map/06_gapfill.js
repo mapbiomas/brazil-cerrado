@@ -9,7 +9,7 @@ var vis = {
     min: 0,
     max: 75,
     palette:require('users/mapbiomas/modules:Palettes.js').get('brazil'),
-    bands: 'classification_2020'
+    bands: 'classification_1986'
 };
 
 // Set Cerrado extent for the final export
@@ -23,16 +23,16 @@ var geometry = ee.Geometry.Polygon(
 var out = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/SENTINEL/C04-POST-CLASSIFICATION/';
 
 // Define the input version
-var inputVersion = '3';
+var inputVersion = '17';
 
 // Define the output version
-var outputVersion = '3';
+var outputVersion = '17';
 
 // Print the input version to the console for tracking purposes
 print ("Classification Version: ", inputVersion);
 
 // Load the image collection containing the raw general map probabilities and classifications
-var data = ee.ImageCollection('projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/SENTINEL/C04_GENERAL-MAP-PROBABILITY');
+var data = ee.ImageCollection('projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/LANDSAT/C11-GENERAL-MAP-PROBABILITY');
 
 // Define a function to build a single multi-band image from the annual classification collection
 var buildCollection = function(input, version, startYear, endYear) {
@@ -59,7 +59,7 @@ var buildCollection = function(input, version, startYear, endYear) {
 var collection = buildCollection(
   data,             // input collection
   inputVersion,     // version 
-  2017,             // startYear
+  1985,             // startYear
   2025);            // endyear
 
 // Apply a mask to discard pixels with a value of zero (NoData/Background)
@@ -70,7 +70,7 @@ Map.addLayer(classificationInput, vis, 'Input classification');
 
 // Gap Fill Processing Functions
 // Generate a sequence of years to define the temporal range for the gap-fill filter
-var years = ee.List.sequence({'start': 2017, 'end': 2025, step: 1}).getInfo();
+var years = ee.List.sequence({'start': 1985, 'end': 2025, step: 1}).getInfo();
 
 // Extract the corresponding band names formatted as 'classification_YYYY'
 var bandNames = ee.List(years.map(function (year) { return 'classification_' + String(year); }));
@@ -165,12 +165,12 @@ print('Output classification', imageFilledtnt0);
 // Export as GEE asset
 Export.image.toAsset({
     'image': imageFilledtnt0,
-    'description': 'CERRADO_C04_gapfill_v' + outputVersion,
-    'assetId': out + 'CERRADO_C04_gapfill_v' + outputVersion,
+    'description': 'CERRADO_C11_gapfill_v' + outputVersion,
+    'assetId': out + 'CERRADO_C11_gapfill_v' + outputVersion,
     'pyramidingPolicy': {
         '.default': 'mode'
     },
     'region': geometry,
-    'scale': 10,
+    'scale': 30,
     'maxPixels': 1e13
 });
