@@ -76,7 +76,7 @@ var buildCollection = function(input, version, startYear, endYear) {
 var collection = buildCollection(
   data,             // input collection
   inputVersion,     // version 
-  1985,             // startYear
+  2017,             // startYear
   2025);            // endyear
 
 // Apply a mask to discard pixels with a value of zero (NoData/Background)
@@ -87,7 +87,7 @@ print('Input classification', classificationInput);
 Map.addLayer(classificationInput.select(['classification_2023']), vis, 'input');
 
 // Generate a sequence of years to define the temporal range for the gap-fill filter
-var years = ee.List.sequence({'start': 2017, 'end': 2024, step: 1}).getInfo();
+var years = ee.List.sequence({'start': 2017, 'end': 2025, step: 1}).getInfo();
 
 // Define the core function to apply the temporal gap-fill algorithm
 var applyGapFill = function (image) {
