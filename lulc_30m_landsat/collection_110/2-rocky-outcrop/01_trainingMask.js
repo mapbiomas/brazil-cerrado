@@ -5,11 +5,12 @@
 // Wetland/Water, Farming, Non-Vegetated), and isolates pixels that remained in the 
 // same broad category throughout the entire evaluated time series (2017–2024).
 
-// Define visualization parameters
-var vis = { 
-  min: 1, 
-  max: 5, 
-  palette: ["#1f8d49", "#d6bc74", "#2532e4", "#edde8e", "#d4271e"] };
+// Define visualization parameters 
+var vis = {
+  min: 1,
+  max: 5,
+  palette: [ '#32a65e', '#2532e4', '#d6bc74', '#edde8e', '#d4271e'],
+};
 
 // Define the version  for the output asset
 var version = '3';
