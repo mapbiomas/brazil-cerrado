@@ -79,10 +79,10 @@ This filter applies a set of temporal consistency rules to correct short-term sp
 *5. Stabilization of the first year (1985):* To prevent false anthropic artifacts from dominating the start of the series, the filter identifies `X-A-A` patterns at the beginning (1985–1987). If 1986 and 1987 are continuously classified as a native vegetation class, the 1985 classification is corrected backward to match them. This is prioritized strictly for Grassland (12), Wetland (11), Sandbank Vegetation (50), Savanna (4), and Forest (3).
 
 ## 14_falseRegrowth.js
-Enforces strict temporal continuity specifically adapted for the short Sentinel time series. It applies distinct rules to remove false native vegetation regrowth, stabilizes initial years, and removes spurious temporary states bridging native vegetation and consolidated deforestation.
+A specialized temporal filter designed to correct ecological transition impossibilities and enforce long-term trajectory continuity, particularly addressing "false regenerations." The main rules are: replaces noisy classifications in the first two years (1985/1986), employs backwards and forward iterative sweeps to stabilize long trajectories, removes transitional classification noise immediately preceding clear-cut deforestation events, detects and overwrites "fallow" mosaic of uses years—where consolidated anthropogenic areas briefly classify as native vegetation.
 
 ## 15_silviculture.js
-A post-processing filter designed to correct the spectral confusion between Forest Plantation (Silviculture) and native Forest Formation (Class 3). Because fast-growing canopies mimic native forest reflectance, this script leverages long-term land-use history to correctly identify and revert false forest pixels back to Mosaic of Uses (Class 21).
+A post-processing filter designed to correct the spectral confusion between Forest Plantation (Silviculture) and native Forest Formation (Class 3). Because fast-growing canopies mimic native forest reflectance, this script leverages long-term land-use history to correctly identify and revert false forest pixels to Mosaic of Uses (Class 21).
 
 ## 16_spatialShape.js
 Applies an Object-Based Image Analysis (OBIA) filter to remove small (<3 ha) and irregularly shaped patches of the Mosaic of Uses (21). Patches that exhibit a low bounding-box fill ratio, or lack a solid 3x3 pixel core (thin/fragmented speckles), are replaced by the focal mode of surrounding valid classes.
