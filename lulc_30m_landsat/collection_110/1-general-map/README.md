@@ -52,7 +52,7 @@ Applies a spatial filter to remove small, isolated patches (Minimum Mappable Uni
 Corrects topographically inconsistent LULC classes using the MERIT Digital Elevation Model (DEM). It converts anomalous Wetlands (11) and Water (33) occurrences on steep slopes into Forest (3), and replaces Mosaic of Uses (21) pixels on extremely steep slopes with the local focal mode.
 
 ## 09_transitions.js
-Applies a combined temporal (3-year window) and spatial filter to remove small, spurious A-B-A class transitions. It groups LULC classes into broad thematic categories (Native, Anthropic, Other). If a pixel toggles classes back and forth within 3 years and forms a small spatial patch (≤6 pixels, 0.5 ha), it is reverted to its previous stable state.
+Applies a combined temporal (3-year window) and spatial filter to remove small, spurious `A-B-A` class transitions. It groups LULC classes into broad thematic categories (Native, Anthropic, Other). If a pixel toggles classes back and forth within 3 years and forms a small spatial patch (≤6 pixels, 0.5 ha), it is reverted to its previous stable state.
 
 ## 10_sandbankVegetation.js
 Identifies and maps herbaceous sandbank vegetation (Restinga Herbácea, 50) in coastal areas. It integrates a CPRM/SGB (Brazilian Geological Service) coastal sandy deposits vector with the historical frequency of Grassland (12) derived from the GTB Landsat-based classification. Based on frequency thresholds, eligible unstable classes are corrected to stable Grassland or Sandbank.
