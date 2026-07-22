@@ -26,13 +26,13 @@ var root = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/SENTINEL/C
 var dirout = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/SENTINEL/C04-ROCKY-POST-CLASSIFICATION/';
 
 // Construct the base name of the input file
-var inputFile = 'CERRADO_C03_rocky_gapfill_frequency_v' + input_version;
+var inputFile = 'CERRADO_C11_rocky_gapfill_frequency_v' + input_version;
 
 // Set the minimum number of connected pixels required (50 pixels = ~0.5 ha)
 var filter_size = 50;
 
 // Generate a sequential list of all years evaluated in the time series
-var years = ee.List.sequence(2017, 2024).getInfo();
+var years = ee.List.sequence(2017, 2025).getInfo();
 
 // Load the  multi-band classification image
 var classification = ee.Image(root + inputFile);
