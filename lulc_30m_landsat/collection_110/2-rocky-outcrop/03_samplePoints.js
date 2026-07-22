@@ -19,7 +19,7 @@ var vis = {
 };
 
 // Define the output version
-var version = '1';
+var version = '3';
 
 // Define the output directory path 
 var output = 'projects/ee-barbarasilvaipam/assets/collection-11_rocky-outcrop/sample/points/';
