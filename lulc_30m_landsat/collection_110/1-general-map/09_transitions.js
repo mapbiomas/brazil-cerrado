@@ -36,7 +36,7 @@ Map.addLayer(classificationInput, vis, 'Input classification', false);
 var startYear = 1985;
 var endYear   = 2025;
 
-// Set the maximum transition patch size in pixels (25 pixels at 10m scale is ~0.25 ha)
+// Set the maximum transition patch size in pixels (6 pixels at 30m scale is ~1 ha)
 var maxPatchPixels = 6;
 
 // Set the maximum connected-pixel search size for performance optimization
