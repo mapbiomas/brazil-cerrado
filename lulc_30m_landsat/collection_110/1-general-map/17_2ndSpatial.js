@@ -1,4 +1,4 @@
-// -- -- -- -- 16) 2nd Spatial Filter
+// -- -- -- -- 17) 2nd Spatial Filter
 // This script applies a spatial filter to the annual LULC classification maps.
 // It removes small isolated patches (Minimum Mappable Unit) and replaces them
 // with the focal mode of a 9x9 pixel neighborhood. Specific classes (e.g., 
@@ -36,7 +36,7 @@ Map.addLayer (inputClassification, vis, 'Input Classification');
 // Set the native processing scale in meters (Sentinel spatial resolution)
 var nativeScale = 30; 
 
-// Set the minimum mapped unit in number of pixels (~0.25 hectare at 10m scale)
+// Set the minimum mapped unit in number of pixels (~1 hectare at 30m scale)
 var minMappedPixels = 11;
 
 // Define an array of classes protected from the spatial filter
@@ -171,7 +171,7 @@ var bandNames = ee.List(years).map(function(year) {
 finalImage = finalImage
   .rename(bandNames)
   .set({
-    'filter': '16_spatial',
+    'filter': '17_spatial',
     'input_asset': inputFile,
     'input_version': inputVersion,
     'output_version': outputVersion,
