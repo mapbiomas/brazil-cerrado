@@ -8,23 +8,23 @@
 var vis = {
   min: 1,
   max: 5,
-  palette: [ "#32a65e", "#2532e4", "#d6bc74", "#edde8e", "#d4271e"],
+  palette: [ '#32a65e', '#2532e4', '#d6bc74', '#edde8e', '#d4271e'],
 };
 
 // Define the output version
-var output_version = '1';
+var output_version = '3';
 
 // Define the input version
-var input_version = '1';
+var input_version = '3';
 
 // Define an array with the numeric values of the classes to be assessed
-var classes = [1, 2, 3, 4, 5];
+var classes = [1, 2, 3, 4, 5, 29];
 
 // Define the base output directory path for the area table asset
-var dirout = 'projects/ee-barbarasilvaipam/assets/collection-04_rocky-outcrop/sample/area/';
+var dirout = 'projects/ee-barbarasilvaipam/assets/collection-11_rocky-outcrop/sample/area/';
 
 // Load the Area of Interest (AOI) 
-var aoi_vec = ee.FeatureCollection('projects/ee-barbarasilvaipam/assets/collection-04_rocky-outcrop/masks/aoi_v1');
+var aoi_vec = ee.FeatureCollection('projects/ee-barbarasilvaipam/assets/collection-11_rocky-outcrop/masks/aoi_v1');
 
 // Convert the AOI feature into a binary image mask 
 var aoi_img = ee.Image(1).clip(aoi_vec);
@@ -33,13 +33,13 @@ var aoi_img = ee.Image(1).clip(aoi_vec);
 Map.addLayer(aoi_img, {palette: ['red']}, 'Area of Interest', false);
 
 // Load the stable pixels training mask generated in the previous step
-var stable = ee.Image('projects/ee-barbarasilvaipam/assets/collection-04_rocky-outcrop/masks/cerrado_rockyTrainingMask_2017_2024_v' + input_version);
+var stable = ee.Image('projects/ee-barbarasilvaipam/assets/collection-11_rocky-outcrop/masks/cerrado_rockyTrainingMask_1985_2024_v' + input_version);
 
 // Compute a frequency histogram of the stable pixels within the AOI to evaluate class distribution
 var pixel_values = stable.reduceRegion({ 
                     reducer: ee.Reducer.frequencyHistogram(), 
                     geometry: aoi_vec.geometry(), 
-                    scale: 10, 
+                    scale: 30, 
                     maxPixels: 1e14 });
 
 // Print the calculated frequency histogram to the console
@@ -68,7 +68,7 @@ var getArea = function(feature) {
     var area = ee.Number(reference_ij.reduceRegion({
       reducer: ee.Reducer.sum(),
       geometry: feature.geometry(),
-      scale: 10,
+      scale: 30,
       maxPixels: 1e13,
       tileScale: 4
     // Extract the numeric area value, scale it, round it, and descale to preserve 4 decimal places
