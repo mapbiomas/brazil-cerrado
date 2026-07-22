@@ -4,4 +4,4 @@ Prepares and exports the final Cerrado LULC classification for general MapBiomas
 Crucially, this script enforces a boundary correction within the **Alto Paraguai Watershed (BAP)**. To ensure thematic harmony between biome boundaries, it reclassifies Cerrado's *Mosaic of Uses* (21) based on the overlapping Pantanal classification mapping
 
 ## Classification and methodology
-For detailed information about the classification and methodology, please read the Cerrado biome (MapBiomas 10m Collection 4 BETA) Appendix of the [Algorithm Theoretical Basis Document (ATBD).](https://brasil.mapbiomas.org/en/atbd-entenda-cada-etapa/)
+For detailed information about the classification and methodology, please read the Cerrado biome (MapBiomas Collection 11) Appendix of the [Algorithm Theoretical Basis Document (ATBD).](https://brasil.mapbiomas.org/en/atbd-entenda-cada-etapa/)
