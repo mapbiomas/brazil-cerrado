@@ -1,5 +1,5 @@
 ## 01_trainingMask.js
-Build the training mask based on stable pixels from MapBiomas Collection 8 (1985 to 2022), aggregating in classes: native vegetation (1), non‑vegetation (2) and rocky outcrop (29)
+Build the training mask based on stable pixels from MapBiomas Collection 9 (1985 to 2023), aggregating in classes: native vegetation (1), non‑vegetation (2), and rocky outcrop (29)
 ```javascript
 // read training mask
 var trainingMask = ee.Image('projects/ee-barbarasilvaipam/assets/collection-10_rocky-outcrop/masks/cerrado_rockyTrainingMask_1985_2023_v4');
