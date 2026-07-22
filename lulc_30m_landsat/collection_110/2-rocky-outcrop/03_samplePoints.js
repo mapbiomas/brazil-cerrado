@@ -8,36 +8,42 @@
 // Define visualization parameters 
 var vis = {
   min: 1,
-  max: 5,
-  palette: [ "#32a65e", "#2532e4", "#d6bc74", "#edde8e", "#d4271e"],
+  max: 29,
+  palette: [
+    '#1f8d49','#d6bc74','#ffefc3','#d4271e','#2532e4','#000000',
+    '#000000','#000000','#000000','#000000','#000000','#000000',
+    '#000000','#000000','#000000','#000000','#000000','#000000',
+    '#000000','#000000','#000000','#000000','#000000','#000000',
+    '#000000','#000000','#000000','#000000','#000000','#ffaa5f'
+  ],
 };
 
 // Define the output version
 var version = '1';
 
 // Define the output directory path 
-var output = 'projects/ee-barbarasilvaipam/assets/collection-04_rocky-outcrop/sample/points/';
+var output = 'projects/ee-barbarasilvaipam/assets/collection-11_rocky-outcrop/sample/points/';
 
 // Define the target total number of automated samples to be distributed across the AOI
-var sampleSize = 13000;    
+var sampleSize = 4800;    
 
 // Define an array with the numeric values of the stable target classes for sampling
 var classes = [1, 2, 3, 4, 5];
 
 // Load the feature collection containing the computed area proportions (from Step 2)
-var file_in = ee.FeatureCollection('projects/ee-barbarasilvaipam/assets/collection-04_rocky-outcrop/sample/area/stable_v1');
+var file_in = ee.FeatureCollection('projects/ee-barbarasilvaipam/assets/collection-11_rocky-outcrop/sample/area/stable_v3');
 
 // Load the Area of Interest (AOI)
-var aoi_vec = ee.FeatureCollection('projects/ee-barbarasilvaipam/assets/collection-04_rocky-outcrop/masks/aoi_v1').geometry();
+var aoi_vec = ee.FeatureCollection('projects/ee-barbarasilvaipam/assets/collection-11_rocky-outcrop/masks/aoi_v1').geometry();
 
 // Convert the AOI geometry into a binary image mask
 var aoi_img = ee.Image(1).clip(aoi_vec);
 
-// Load the stable pixels mask from Collection 3.0 (from Step 1)
-var stablePixels = ee.Image('projects/ee-barbarasilvaipam/assets/collection-04_rocky-outcrop/masks/cerrado_rockyTrainingMask_2017_2024_v1').rename('class');
+// Load the stable pixels mask from Collection 10.1 (from Step 1)
+var stablePixels = ee.Image('projects/ee-barbarasilvaipam/assets/collection-11_rocky-outcrop/masks/cerrado_rockyTrainingMask_1985_2024_v3').rename('class');
 
 // Load the manually Rocky Outcrop samples
-var rocky_samples = ee.FeatureCollection('projects/ee-barbarasilvaipam/assets/collection-04_rocky-outcrop/C04_rocky-outcrop-collected-v1')
+var rocky_samples = ee.FeatureCollection('projects/ee-barbarasilvaipam/assets/collection-11_rocky-outcrop/C11_rocky-outcrop-collected-v1')
   // Map over the features to append the official MapBiomas class ID (29) and retain only that property
   .map(function(feature) {
     return feature.set({'class': '29'}).select(['class']);
@@ -80,7 +86,7 @@ var n_nonvegetated = computeSize(ee.Number(nonvegetated));
 
 // Generate a stratified random sample of points based on the computed class allocations
 var training = stablePixels.stratifiedSample({
-                           'scale': 10,
+                           'scale': 30,
                            'classBand': 'class', 
                            'numPoints': 0,
                            'region': aoi_img.geometry(),
