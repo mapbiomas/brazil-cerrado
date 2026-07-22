@@ -1,7 +1,7 @@
 // -- -- -- -- 08) Spatial Filter
 // This script applies a spatial filter to eliminate isolated or edge transition 
 // pixels from the Rocky Outcrop classification. It enforces a Minimum Mappable 
-// Unit (MMU) of 20 pixels (~0.2 hectares at 10m resolution). 
+// Unit (MMU) of 12 pixels (~1 hectare at 30m resolution). 
 // Pixel clusters that do not share at least 20 connections (using 4-way 
 // connectedness) with the same class are considered isolated noise and are 
 // replaced by the focal mode of their surrounding 10-pixel neighborhood.
@@ -16,23 +16,23 @@ var vis = {
 };
 
 // Define the input version string matching the frequency filter output
-var input_version = '1';
+var input_version = '4';
 
 // Define the output version string for the spatial-filtered asset
-var output_version = '1';
+var output_version = '8';
 
 // Define the base directory path 
-var root = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/SENTINEL/C04-ROCKY-POST-CLASSIFICATION/';
-var dirout = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/SENTINEL/C04-ROCKY-POST-CLASSIFICATION/';
+var root = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/LANDSAT/C11-ROCKY-POST-CLASSIFICATION/';
+var dirout = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/LANDSAT/C11-ROCKY-POST-CLASSIFICATION/';
 
 // Construct the base name of the input file
-var inputFile = 'CERRADO_C03_rocky_gapfill_frequency_v' + input_version;
+var inputFile = 'CERRADO_C11_rocky_gapfill_frequency_v' + input_version;
 
-// Set the minimum number of connected pixels required (50 pixels = ~0.5 ha)
-var filter_size = 50;
+// Set the minimum number of connected pixels required (12 pixels = ~1 ha)
+var filter_size = 12;
 
 // Generate a sequential list of all years evaluated in the time series
-var years = ee.List.sequence(2017, 2024).getInfo();
+var years = ee.List.sequence(1985, 2025).getInfo();
 
 // Load the  multi-band classification image
 var classification = ee.Image(root + inputFile);
@@ -63,7 +63,7 @@ years.forEach(function(year_i) {
 
   // Blend the original classification with the masked focal mode (replacing only the isolated small patches)
   // Reproject strictly to EPSG:4326 at 10m scale to force neighborhood computations at the native resolution
-  var classification_i = currentBand.blend(to_mask).reproject('EPSG:4326', null, 10);
+  var classification_i = currentBand.blend(to_mask).reproject('EPSG:4326', null, 30);
 
   // Remove the temporary 0 background mask and append the filtered band to the final multi-band stack
   filtered = filtered.addBands(classification_i.updateMask(classification_i.neq(0)));
@@ -79,10 +79,10 @@ print('Output classification', filtered);
 // Configure and execute the Earth Engine batch task to export the finalized image as an Asset
 Export.image.toAsset({
   'image': filtered,
-  'description': 'CERRADO_C04_rocky_gapfill_frequency_spatial_v' + output_version,
-  'assetId': dirout + 'CERRADO_C04_rocky_gapfill_frequency_spatial_v' + output_version,
+  'description': 'CERRADO_C11_rocky_gapfill_frequency_spatial_v' + output_version,
+  'assetId': dirout + 'CERRADO_C11_rocky_gapfill_frequency_spatial_v' + output_version,
   'pyramidingPolicy': { '.default': 'mode' },
   'region': classification.geometry(),
-  'scale': 10,
+  'scale': 30,
   'maxPixels': 1e13
 });
