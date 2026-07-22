@@ -1,4 +1,4 @@
-// -- -- -- -- 15) Spatial Shapes Filter
+// -- -- -- -- 16) Spatial Shapes Filter
 // This script applies an object-based spatial filter to remove small, irregular, 
 // or fragmented patches of the Mosaic of Uses. It calculates geometric patch metrics—including 
 // area, bounding-box fill ratio, and the presence of a 3x3 pixel core. 
