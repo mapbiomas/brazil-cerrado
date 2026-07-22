@@ -389,9 +389,7 @@ var applyRestingaFixedArea = function(img) {
   });
 };
 
-
-// --- Step 4: Execute Filters ---
-
+// Apply False Regrowth Filters
 var outputClassification = classification;
 
 // 1. Correct initial years when the reference year is class 12
