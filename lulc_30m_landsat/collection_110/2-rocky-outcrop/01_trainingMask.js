@@ -1,9 +1,9 @@
 // -- -- -- -- 01) Stable Training Mask
 // This script generates a stable training mask specifically for the Rocky Outcrop 
-// classification in the Cerrado. It extracts data from the MapBiomas 10m Collection 3.0, 
+// classification in the Cerrado. It extracts data from the MapBiomas Collection 10.1, 
 // groups detailed LULC classes into five broad thematic categories (Forest, Herbaceous, 
 // Wetland/Water, Farming, Non-Vegetated), and isolates pixels that remained in the 
-// same broad category throughout the entire evaluated time series (2017–2024).
+// same broad category throughout the entire evaluated time series (1985–2024).
 
 // Define visualization parameters 
 var vis = {
