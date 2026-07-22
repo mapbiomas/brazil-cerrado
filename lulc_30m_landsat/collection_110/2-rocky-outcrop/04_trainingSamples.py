@@ -1,13 +1,16 @@
 # --- --- --- 04) Training Samples Generation
 # This script extracts temporal and geomorphometric signatures for the Rocky 
-# Outcrop classification. It generates annual mosaics (2017–2024) using Google 
-# Satellite Embeddings and Geomorpho90m topographic covariates. It then 
-# samples these mosaics at the pre-defined stratified training point locations 
-# (using a 70% random split) and exports the datasets as GEE Table Assets.
+# Outcrop classification. It generates annual mosaics (1985–2025) from Landsat annual 
+# mosaics and other terrain and spatial-context covariates. It then samples these mosaics 
+# at the pre-defined stratified training point and exports the datasets as GEE Table Assets.
 
 ## Initialization and Imports
 import ee            # Import the Earth Engine API
 import math          # Import math for trigonometric functions
+import pandas as pd  # Import pandas for data manipulation 
+import sys           # Import system-specific parameters and functions
+import os            # Import operating system functionalities
+import re            # Import regular expression operations for string parsing
 
 # Authenticate the Earth Engine account (required in new environments)
 ee.Authenticate()
@@ -15,53 +18,47 @@ ee.Authenticate()
 # Initialize the Earth Engine session with the specified project
 ee.Initialize(project = 'ee-ipam')
 
+# Clone the MapBiomas GitHub repository to access custom helper functions
+!rm -rf /content/mapbiomas-mosaic
+!git clone https://github.com/costa-barbara/mapbiomas-mosaic.git
+sys.path.append("/content/mapbiomas-mosaic")
+
+# Import custom MapBiomas modules for mosaicking and spectral metrics
+from modules.SpectralIndexes import *
+from modules.Miscellaneous import *
+from modules.Mosaic import *
+from modules.SmaAndNdfi import *
+from modules.ThreeYearMetrics import *
+from modules import Map
+
 ## Parameters and Asset Paths
 # Define the input version for the sample points
-version_in = '1'
+version_in = '3'
 
 # Define the output version for the generated training data
-version_out = '1'
+version_out = '3'
 
 # Define the base output folder path for storing the generated training assets in GEE
-dirout = f'projects/ee-barbarasilvaipam/assets/collection-04_rocky-outcrop/trainings/v{version_out}/'
+dirout = f'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/LANDSAT/trainings_rocky/v{version_out}/'
 
 # Define the list of years to be processed
-years = list(range(2017, 2026))
+years = list(range(1985, 2026))
 
-# Define the Earth Engine asset ID for the Google Satellite Embedding dataset
-# Source: https://developers.google.com/earth-engine/datasets/catalog/GOOGLE_SATELLITE_EMBEDDING_V1_ANNUAL?hl=pt-br
-collectionId = 'GOOGLE/SATELLITE_EMBEDDING/V1/ANNUAL'
+# Landsat mosaic parameters
+collectionId = 'LANDSAT/COMPOSITES/C02/T1_L2_32DAY'
+spectralBands = ['blue', 'red', 'green', 'nir', 'swir1', 'swir2']
 
 ## Load Base Datasets
 # Load the Area of Interest (AOI) feature
-aoi_vec = ee.FeatureCollection('projects/ee-barbarasilvaipam/assets/collection-04_rocky-outcrop/masks/aoi_v1').geometry()
+aoi_vec = ee.FeatureCollection('projects/ee-barbarasilvaipam/assets/collection-11_rocky-outcrop/masks/aoi_v1').geometry()
 
 # Convert the AOI geometry into a binary image mask
 aoi_img = ee.Image(1).clip(aoi_vec)
 
 # Load the unified sample points generated in the previous step
-samples = ee.FeatureCollection('projects/ee-barbarasilvaipam/assets/collection-04_rocky-outcrop/sample/points/samplePoints_v' + version_in)
+samples = ee.FeatureCollection('projects/ee-barbarasilvaipam/assets/collection-11_rocky-outcrop/sample/points/samplePoints_v' + version_in)
 
-## Geomorphometric Covariates
-# Construct a dictionary containing Geomorpho90m topographic covariates and MERIT DEM
-geomorpho = {
-    'dem': ee.Image('MERIT/DEM/v1_0_3').select('dem').toInt64().rename('merit_dem'),
-    'aspect': ee.ImageCollection("projects/sat-io/open-datasets/Geomorpho90m/aspect").mosaic().multiply(10000).round().rename('aspect').toInt64(),
-    'aspect_cosine': ee.ImageCollection("projects/sat-io/open-datasets/Geomorpho90m/aspect-cosine").mosaic().multiply(10000).round().rename('aspect_cosine').toInt64(),
-    'aspect_sine': ee.ImageCollection("projects/sat-io/open-datasets/Geomorpho90m/aspect-sine").mosaic().multiply(10000).round().rename('aspect_sine').toInt64(),
-    'pcurv': ee.ImageCollection("projects/sat-io/open-datasets/Geomorpho90m/pcurv").mosaic().multiply(10000).round().rename('pcurv').toInt64(),
-    'tcurv': ee.ImageCollection("projects/sat-io/open-datasets/Geomorpho90m/tcurv").mosaic().multiply(10000).round().rename('tcurv').toInt64(),
-    'convergence': ee.ImageCollection("projects/sat-io/open-datasets/Geomorpho90m/convergence").mosaic().multiply(10000).round().rename('convergence').toInt64(),
-    'roughness': ee.ImageCollection("projects/sat-io/open-datasets/Geomorpho90m/roughness").mosaic().multiply(10000).round().rename('roughness').toInt64(),
-    'eastness': ee.ImageCollection("projects/sat-io/open-datasets/Geomorpho90m/eastness").mosaic().multiply(10000).round().rename('eastness').toInt64(),
-    'northness': ee.ImageCollection("projects/sat-io/open-datasets/Geomorpho90m/northness").mosaic().multiply(10000).round().rename('northness').toInt64(),
-    'dxx': ee.ImageCollection("projects/sat-io/open-datasets/Geomorpho90m/dxx").mosaic().multiply(10000).round().rename('dxx').toInt64(),
-    'tri': ee.ImageCollection("projects/sat-io/open-datasets/Geomorpho90m/tri").mosaic().multiply(10000).round().rename('tri').toInt64(),
-    'tpi': ee.ImageCollection("projects/sat-io/open-datasets/Geomorpho90m/tpi").mosaic().multiply(10000).round().rename('tpi').toInt64(),
-    'cti': ee.ImageCollection("projects/sat-io/open-datasets/Geomorpho90m/cti").mosaic().multiply(10000).round().rename('cti').toInt64(),
-}
-
-# Initialize an empty dictionary to temporarily store computed mosaics by year
+# Initialize an empty dictionary to store computed mosaics by year temporarily
 mosaic_dict = {}
 
 # Define a function to check if a specific asset already exists in the Earth Engine directory
@@ -91,62 +88,79 @@ for year in years:
     lon_sin = coords.select('longitude').multiply(math.pi).divide(180).sin().multiply(-1).multiply(10000).toInt16().rename('longitude_sin')
     lon_cos = coords.select('longitude').multiply(math.pi).divide(180).cos().multiply(-1).multiply(10000).toInt16().rename('longitude_cos')
 
-
-    ## Mosaic Assembly 
-
-    # Define the start date based on the current iteration year
-    dateStart = ee.Date.fromYMD(year, 1, 1)
-
-    # Define the end date
-    dateEnd = dateStart.advance(1, 'year')
-
-    # Filter the Google Satellite Embeddings collection by date 
-    collection = ee.ImageCollection(collectionId).filter(ee.Filter.date(dateStart, dateEnd)).filter(ee.Filter.bounds(aoi_vec)).mosaic()
-
-    # Assign the embedded mosaic as the base image for the final composition
-    mosaic = collection
-
-    # Append the processed geographic coordinate bands to the mosaic
-    mosaic = mosaic.addBands(lat).addBands(lon_sin).addBands(lon_cos)
+    # Load HAND data (height above nearest drainage)
+    hand = ee.ImageCollection("users/gena/global-hand/hand-100").mosaic().toInt16().clip(aoi_vec).rename('hand')
     
-    # Iterate through the geomorphology dictionary and append each topographic band to the mosaic
-    for key in geomorpho:
-        mosaic = mosaic.addBands(geomorpho[key])
+    ## Mosaic Assembly 
+    # Set the best temporal window for the Cerrado biome
+    dateStart = ee.Date.fromYMD(year, 4, 1)
+    dateEnd = ee.Date.fromYMD(year, 10, 1)
 
+    # Filter Landsat image collection by date and region
+    collection = ee.ImageCollection(collectionId)\
+            .filter(ee.Filter.date(dateStart, dateEnd))\
+            .filter(ee.Filter.bounds(aoi_vec))\
+            .select(spectralBands)
+    
+    # Apply scaling factor for reflectance correction
+    collection = collection.map(lambda image: image.multiply(10000).copyProperties(image, ['system:time_start', 'system:time_end']))
+
+    # Apply spectral indexes function
+    collection = collection\
+      .map(getNDVI).map(getNBR).map(getMNDWI).map(getEVI2)\
+      .map(getMSI).map(getTGSI).map(getBSI).map(getNDRI)\
+      .map(getHallCover).map(getHallHeight)
+    
+    # Generate mosaic using specific criteria
+    mosaic = getMosaic(
+        collection=collection,
+        dateStart=dateStart,
+        dateEnd=dateEnd,
+        percentileBand='ndvi',
+        percentileDry=25,
+        percentileWet=75,
+        percentileMin=5,
+        percentileMax=95
+    )
+    
+    # Add terrain ruggedness and texture
+    mosaic = getTerrainMetrics(mosaic)
+    mosaic = getSpatialContext(mosaic)
+    
+    # Append the processed geographic coordinate bands to the mosaic
+    mosaic = mosaic.addBands(lat).addBands(lon_sin).addBands(lon_cos).addBands(hand)
+    
     # Store the assembled multi-band composite in the tracking dictionary
     mosaic_dict[year] = mosaic
+    mosaic = threeYearMetrics(year, mosaic, mosaic_dict)
 
     # Clip the final mosaic to the boundaries of the AOI
     mosaic = mosaic.clip(aoi_vec)
-
-    # Scale the mosaic values and round them to prepare for extraction
-    mosaic = mosaic.multiply(100000).round()
+    
+    # Convert to int32 to ensure compatibility
+    mosaic = mosaic.multiply(100).round().toInt32()
 
     # Append a constant band representing the processing year cast as Int16
     mosaic = mosaic.addBands(ee.Image(year).int16().rename('year'))
 
 
     ## Sampling and Export
-
-    # Assign a random column to the samples and filter out 70% of them for training purposes
-    training_samples = samples.randomColumn("random").filter(ee.Filter.lt('random', 0.70))
-
     # Extract the mosaic pixel values at the locations of the training points
     training_i = mosaic.sampleRegions(
-        collection=training_samples,
-        scale=10,
-        geometries=True,
-        tileScale=4
+        collection = samples,
+        scale = 30,
+        geometries = True,
+        tileScale = 4
     )
 
     # Print the total number of points submitted for extraction to the console
-    print('Number of training points: ' + str(training_samples.size().getInfo()))
+    print('Number of training points: ' + str(samples.size().getInfo()))
 
     # Filter the extracted collection to strictly remove points that returned null values for any band
     training_i = training_i.filter(ee.Filter.notNull(mosaic.bandNames().getInfo()))
 
     # Construct the exact expected asset ID for the current year's export
-    asset_id = f'{dirout}train_col04_rocky_{year}_v{version_out}'
+    asset_id = f'{dirout}train_col11_rocky_{year}_v{version_out}'
     
     # Check if the asset already exists in the directory to prevent redundant processing
     if asset_exists(asset_id):
@@ -156,7 +170,7 @@ for year in years:
     # Configure the Earth Engine batch export task for the extracted training table
     task = ee.batch.Export.table.toAsset(
         collection=training_i,
-        description=f'train_col04_rocky_{year}_v{version_out}',
+        description=f'train_col11_rocky_{year}_v{version_out}',
         assetId=asset_id
     )
 
