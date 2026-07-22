@@ -2,7 +2,7 @@
 // This script applies a highly restrictive temporal frequency filter to the 
 // Rocky Outcrop class. Because rocky outcrops are stable geological features, 
 // this filter assumes they should not change over a short time series. Pixels 
-// classified as rocky outcrop for >= 99% of the time series are stabilized as 
+// classified as rocky outcrop for >= 97% of the time series are stabilized as 
 // 29 across all years. Pixels failing this strict stability threshold 
 // are forced to Class 99
 
@@ -14,7 +14,7 @@ var vis = {
   palette: [
     '#1f8d49','#d6bc74','#519799','#ffefc3','#d4271e','#2532e4',
     '#000000','#000000','#000000','#000000','#000000','#000000',
-    '#000000','#723d46','#000000','#000000','#000000','#000000',
+    '#000000','#000000','#000000','#000000','#000000','#000000',
     '#000000','#000000','#000000','#000000','#000000','#000000',
     '#000000','#000000','#000000','#000000','#000000','#ffaa5f'
   ],
@@ -22,17 +22,17 @@ var vis = {
 };
 
 // Define the input version string matching the gap-fill filter output
-var input_version = '1';
+var input_version = '3';
 
 // Define the output version string for the frequency-corrected asset
-var output_version = '1';
+var output_version = '4';
 
 // Define the base directory path 
-var root = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/SENTINEL/C04-ROCKY-POST-CLASSIFICATION/';
-var dirout = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/SENTINEL/C04-ROCKY-POST-CLASSIFICATION/';
+var root = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/LANDSAT/C11-ROCKY-POST-CLASSIFICATION/';
+var dirout = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/LANDSAT/C11-ROCKY-POST-CLASSIFICATION/';
 
 // Construct the base name of the input file based on the previous workflow step
-var inputFile = 'CERRADO_C04_rocky_gapfill_v' + input_version;
+var inputFile = 'CERRADO_C11_rocky_gapfill_v' + input_version;
 
 // Load the multi-band classification image
 var classification = ee.Image(root + inputFile);
@@ -58,11 +58,11 @@ var filterFreq = function(image) {
     'Frequency of Class 29', false);
   
   // Apply the strict geological stability threshold:
-  // If frequency >= 99%, force the pixel to Class 29 (stable rocky outcrop)
-  // If frequency < 99%, force the pixel to Class 99 (unstable/non-rocky placeholder)
+  // If frequency >= 97%, force the pixel to Class 29 (stable rocky outcrop)
+  // If frequency < 97%, force the pixel to Class 99 (unstable/non-rocky placeholder)
   var filtered = ee.Image(0)
-    .where(rockyFreq.gte(99), 29)
-    .where(rockyFreq.lt(99), 99);
+    .where(rockyFreq.gte(97), 29)
+    .where(rockyFreq.lt(97), 99);
   
   // Self-mask to remove any absolute 0 values (though the logic above guarantees 29 or 99)
   filtered = filtered.updateMask(filtered.neq(0));
@@ -83,13 +83,13 @@ print('Filtered classification', classification_filtered);
 // Export as GEE asset
 Export.image.toAsset({
     'image': classification_filtered,
-    'description': 'CERRADO_C04_rocky_gapfill_frequency_v' + output_version,
-    'assetId': dirout + 'CERRADO_C04_rocky_gapfill_frequency_v' + output_version,
+    'description': 'CERRADO_C11_rocky_gapfill_frequency_v' + output_version,
+    'assetId': dirout + 'CERRADO_C11_rocky_gapfill_frequency_v' + output_version,
     'pyramidingPolicy': {
         '.default': 'mode'
     },
     'region': classification.geometry(),
-    'scale': 10,
+    'scale': 30,
     'maxPixels': 1e13
 });
 
