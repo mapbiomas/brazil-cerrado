@@ -1,5 +1,5 @@
 // --- --- --- 09_integration
-// Post-processing: integration of the classification of 'rocky outcrop' (individual flow) with the classification of native vegetation and anthropic class [21]
+// Post-processing: integration of the classification of 'rocky outcrop' (individual flow) with the classification of native vegetation and anthropogenic class [21]
 // barbara.silva@ipam.org.br and dhemerson.costa@ipam.org.br
 
 // Define input files
