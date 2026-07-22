@@ -84,7 +84,7 @@ Enforces strict temporal continuity specifically adapted for the short Sentinel 
 ## 15_silviculture.js
 A post-processing filter designed to correct the spectral confusion between Forest Plantation (Silviculture) and native Forest Formation (Class 3). Because fast-growing canopies mimic native forest reflectance, this script leverages long-term land-use history to correctly identify and revert false forest pixels back to Mosaic of Uses (Class 21).
 
-## 16_spatialShapeFilter.js
+## 16_spatialShape.js
 Applies an Object-Based Image Analysis (OBIA) filter to remove small (<3 ha) and irregularly shaped patches of the Mosaic of Uses (21). Patches that exhibit a low bounding-box fill ratio, or lack a solid 3x3 pixel core (thin/fragmented speckles), are replaced by the focal mode of surrounding valid classes.
 
 ## 17_2stSpatial.js
