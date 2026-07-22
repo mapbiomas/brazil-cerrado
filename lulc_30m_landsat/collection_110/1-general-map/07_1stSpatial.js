@@ -33,7 +33,7 @@ print('Input classification', inputClassification);
 Map.addLayer (inputClassification, vis, 'Input Classification');
 
 // Spatial Filter Parameters
-// Set the native processing scale in meters (Sentinel spatial resolution)
+// Set the native processing scale in meters (Landsat spatial resolution)
 var nativeScale = 30; 
 
 // Set the minimum mapped unit in number of pixels (~1 hectare at 30m scale)
