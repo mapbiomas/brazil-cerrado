@@ -28,8 +28,8 @@ var dirout = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/LANDSAT/
 // Construct the base name of the input file
 var inputFile = 'CERRADO_C11_rocky_gapfill_frequency_v' + input_version;
 
-// Set the minimum number of connected pixels required (12 pixels = ~1 ha)
-var filter_size = 12;
+// Set the minimum number of connected pixels required (11 pixels = ~1 ha)
+var filter_size = 11;
 
 // Generate a sequential list of all years evaluated in the time series
 var years = ee.List.sequence(1985, 2025).getInfo();
