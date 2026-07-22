@@ -8,13 +8,13 @@
 var version = '1';
 
 // Define the base output directory path
-var dirout = 'projects/ee-barbarasilvaipam/assets/collection-04_rocky-outcrop/masks/';
+var dirout = 'projects/ee-barbarasilvaipam/assets/collection-11_rocky-outcrop/masks/';
 
 // Define the buffer distance in meters (55,000 m = 55 km)
 var bufferDistance = 55000;
 
 // Load the Rocky Outcrop sample points 
-var rockySamplesGeometry = ee.FeatureCollection('projects/ee-barbarasilvaipam/assets/collection-04_rocky-outcrop/C04_rocky-outcrop-collected-v1').geometry();
+var rockySamplesGeometry = ee.FeatureCollection('projects/ee-barbarasilvaipam/assets/collection-11_rocky-outcrop/C11_rocky-outcrop-collected-v1').geometry();
 
 // Apply the spatial buffer around the samples
 var aoiBuffer = rockySamplesGeometry.buffer(bufferDistance);
