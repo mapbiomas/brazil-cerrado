@@ -45,7 +45,7 @@ var targetClass = 21;
 var maxPatchHa = 3.0;
 
 // Set the maximum connected-object size in pixels for the algorithm 
-// 128 pixels safely covers 1 ha at 10m scale
+// 128 pixels safely covers 1 ha at 30m scale
 var maxObjectPixels = 128;
 
 // Set the minimum bounding-box fill ratio
