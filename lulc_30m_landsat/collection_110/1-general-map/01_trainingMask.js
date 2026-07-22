@@ -19,7 +19,7 @@ var extent = ee.Geometry.Polygon(
   null, false
 );
 
-// Visualization parameters
+// Define visualization parameters
 var vis = {
     min: 0,
     max: 75,
