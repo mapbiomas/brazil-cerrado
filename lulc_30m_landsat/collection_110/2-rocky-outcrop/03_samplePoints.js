@@ -19,7 +19,10 @@ var vis = {
 };
 
 // Define the output version
-var version = '3';
+var output_version = '3';
+
+// Define the input version
+var input_version = '3';
 
 // Define the output directory path 
 var output = 'projects/ee-barbarasilvaipam/assets/collection-11_rocky-outcrop/sample/points/';
@@ -31,7 +34,7 @@ var sampleSize = 4800;
 var classes = [1, 2, 3, 4, 5];
 
 // Load the feature collection containing the computed area proportions (from Step 2)
-var file_in = ee.FeatureCollection('projects/ee-barbarasilvaipam/assets/collection-11_rocky-outcrop/sample/area/stable_v3');
+var file_in = ee.FeatureCollection('projects/ee-barbarasilvaipam/assets/collection-11_rocky-outcrop/sample/area/stable_v'+input_version);
 
 // Load the Area of Interest (AOI)
 var aoi_vec = ee.FeatureCollection('projects/ee-barbarasilvaipam/assets/collection-11_rocky-outcrop/masks/aoi_v1').geometry();
@@ -123,8 +126,8 @@ print('rocky', trainingSamplesFixed.filterMetadata('class', 'equals', 29).size()
 
 // Export as GEE asset
 Export.table.toAsset({'collection': trainingSamplesFixed,
-                      'description': 'samplePoints_v' + version,
-                      'assetId':  output + 'samplePoints_v' + version
+                      'description': 'samplePoints_v' + output_version,
+                      'assetId':  output + 'samplePoints_v' + output_version
                       }
                     );
 
