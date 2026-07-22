@@ -3,7 +3,7 @@
 // It dynamically calculates the optimal sample size per class for each ecoregion based on area 
 // proportions (step 2) and distributes these points exclusively over stable pixels (step 1).
  
-// Define isualization parameters
+// Define visualization parameters
 var vis = {
     min: 0,
     max: 75,
