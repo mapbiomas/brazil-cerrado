@@ -87,7 +87,7 @@ A post-processing filter designed to correct the spectral confusion between Fore
 ## 16_spatialShape.js
 Applies an Object-Based Image Analysis (OBIA) filter to remove small (<3 ha) and irregularly shaped patches of the Mosaic of Uses (21). Patches that exhibit a low bounding-box fill ratio, or lack a solid 3x3 pixel core (thin/fragmented speckles), are replaced by the focal mode of surrounding valid classes.
 
-## 17_2stSpatial.js
+## 17_2ndSpatial.js
 Applies a second spatial filter to remove small, isolated patches (Minimum Mappable Unit) and replaces them with the focal mode of a 9x9 pixel neighborhood (~1 ha). Specific native classes (Forest Formation (3), Wetland (11), and Water (33)) are protected from this filter to preserve fine ecological features.
 
 ## Classification and methodology
