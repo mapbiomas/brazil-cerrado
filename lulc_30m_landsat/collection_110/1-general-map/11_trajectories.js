@@ -1,10 +1,9 @@
 // -- -- -- -- 11) Temporal Trajectory
-// This script applies rule-based temporal trajectory filters to stabilize 
-// specific LULC transitions in the Cerrado time series. It corrects spurious 
-// intermediate states (e.g., Grassland acting as a false bridge 
-// between Native Vegetation and Anthropic classes) and stabilizes erratic 
-// sequences like 4 -> 12 -> 21 -> 4 into continuous stable states (4 -> 4 -> 4 -> 4).
-// It also removes anomalous Non-Vegetated (25) blocks bounded by native vegetation.
+// Stabilizes specific Land Use and Land Cover (LULC) trajectories in the 
+// Cerrado time series. It primarily targets Class 12 (Grassland) which often 
+// appears as an unstable intermediate classification state during the transition 
+// between native vegetation and anthropic classes (Mosaic of Uses - 21). 
+// It also cleans up false Non-Vegetated (25) gaps within native areas.
 
 
 // Define visualization parameters
@@ -25,11 +24,11 @@ var inputVersion = '3';
 var outputVersion = '4';
 
 // Define the base directory
-var root = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/SENTINEL/C04-POST-CLASSIFICATION/';
-var out = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/SENTINEL/C04-POST-CLASSIFICATION/';
+var root = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/LANDSAT/C11-POST-CLASSIFICATION/';
+var out = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/LANDSAT/C11-POST-CLASSIFICATION/';
 
 // Construct the base name of the input file
-var inputFile = 'CERRADO_C04_gapfill_v3_spt_v1_tp_v3_tra_v2_snv_v' + inputVersion;
+var inputFile = 'CERRADO_C11_gapfill_v17_spt_v2_tp_v2_tra_v5_snv_v' + inputVersion;
 
 // Load the classification multi-band image
 var classificationInput = ee.Image(root + inputFile);
@@ -37,11 +36,10 @@ print('Input classification', classificationInput);
 Map.addLayer(classificationInput, vis, 'Input classification', false);
 
 // Set the starting and ending year of the processing time-series
-var startYear = 2017;
+var startYear = 1985;
 var endYear = 2025;
 
 // Define specific LULC class IDs evaluated in the trajectory rules
-var savannaClass = 4;
 var grasslandClass = 12;
 var mosaicClass = 21;
 var nonVegetatedClass = 25;
@@ -97,243 +95,245 @@ var changed = function(before, after) {
 };
 
 // Trajectory Rule Function
-// Rule A: Correct sequence 4 -> 12 -> 21 -> 4 by converting the intermediate 12 and 21 classes to 4
-var applySavanna12MosaicBetweenSavannaRule = function(image) {
-  // Execute logic across all years to build the corrected stack
-  return buildAnnualStack(years, function(year) {
-    // Select the current year band
-    var current = selectYear(image, year);
-    // Initialize the corrected image state as the current state
-    var corrected = current;
-
-    // Correct the Grassland (12) anomaly within the sequence 4 -> 12 -> 21 -> 4
-    if (year >= startYear + 1 && year <= endYear - 2) {
-      // Isolate adjacent years to evaluate the temporal sequence relative to Class 12
-      var previousFor12 = selectYear(image, year - 1);
-      var nextFor12 = selectYear(image, year + 1);
-      var nextFor12Second = selectYear(image, year + 2);
-
-      // Define the boolean mask for the specific 4-12-21-4 anomaly centered on 12
-      var class12InSequence = previousFor12.eq(savannaClass).and(current.eq(grasslandClass)).and(nextFor12.eq(mosaicClass)).and(nextFor12Second.eq(savannaClass));
-      // Apply the correction: overwrite the current 12 with 4 where the sequence condition is met
-      corrected = corrected.where(class12InSequence, savannaClass);
-    }
-
-    // Correct the Mosaic (21) anomaly within the sequence 4 -> 12 -> 21 -> 4
-    if (year >= startYear + 2 && year <= endYear - 1) {
-      // Isolate adjacent years to evaluate the temporal sequence relative to Class 21
-      var previousFor21Second = selectYear(image, year - 2);
-      var previousFor21 = selectYear(image, year - 1);
-      var nextFor21 = selectYear(image, year + 1);
-
-      // Define the boolean mask for the specific 4-12-21-4 anomaly centered on 21
-      var class21InSequence = previousFor21Second.eq(savannaClass).and(previousFor21.eq(grasslandClass)).and(current.eq(mosaicClass)).and(nextFor21.eq(savannaClass));
-      // Apply the correction: overwrite the current 21 with 4 where the sequence condition is met
-      corrected = corrected.where(class21InSequence, savannaClass);
-    }
-    // Return the processed band for the current year
-    return corrected;
-  });
-};
-
-
-// Rule B: Correct unstable single-year Class 12 intermediate states between Native and Mosaic
+// Rule A: Function to correct single-year Class 12 (Grassland) anomalies
+// Fixes rapid 1-year oscillation states (e.g., Native -> 12 -> 21)
 var applyOneYearTrajectoryRule = function(image) {
-  // Execute logic across all years to build the corrected stack
-  return buildAnnualStack(years, function(year) {
-    // Select the current year band
-    var current = selectYear(image, year);
-    // Skip processing for edge years to avoid temporal window out-of-bounds errors
-    if (year === startYear || year === endYear) { return current; }
 
-    // Retrieve previous and next year bands for evaluation
+  return buildAnnualStack(years, function(year) {
+
+    var current = selectYear(image, year);
+
+    // Skip edge years (first and last) as they lack a full t-1 / t+1 context
+    if (year === startYear || year === endYear) {
+      return current;
+    }
+
+    // Extract temporal neighborhood (previous and next years)
     var previous = selectYear(image, year - 1);
     var next = selectYear(image, year + 1);
 
-    // Identify Native -> 12 -> 21 transitions
-    var nativeToMosaic = getClassMask(previous, nativeClasses).and(current.eq(grasslandClass)).and(next.eq(mosaicClass));
-    // Identify 21 -> 12 -> Native transitions
-    var mosaicToNative = previous.eq(mosaicClass).and(current.eq(grasslandClass)).and(getClassMask(next, nativeClasses));
-    // Identify 21 -> 12 -> 21 transitions
-    var mosaicToMosaic = previous.eq(mosaicClass).and(current.eq(grasslandClass)).and(next.eq(mosaicClass));
+    // Condition 1: Correct Native -> 12 -> 21 (Deforestation transition artifact)
+    var nativeToMosaic = getClassMask(previous, nativeClasses)
+      .and(current.eq(grasslandClass))
+      .and(next.eq(mosaicClass));
 
-    // Combine all unstable single-year Class 12 conditions into one correction mask
-    var correctionMask = nativeToMosaic.or(mosaicToNative).or(mosaicToMosaic);
-    // Apply correction: overwrite the intermediate 12 with the subsequent class (next)
+    // Condition 2: Correct 21 -> 12 -> Native (Regeneration transition artifact)
+    var mosaicToNative = previous.eq(mosaicClass)
+      .and(current.eq(grasslandClass))
+      .and(getClassMask(next, nativeClasses));
+
+    // Condition 3: Correct 21 -> 12 -> 21 (Instability within anthropic use)
+    var mosaicToMosaic = previous.eq(mosaicClass)
+      .and(current.eq(grasslandClass))
+      .and(next.eq(mosaicClass));
+
+    // Combine all single-year artifact conditions into one correction mask
+    var correctionMask = nativeToMosaic
+      .or(mosaicToNative)
+      .or(mosaicToMosaic);
+
+    // Replace the current Class 12 pixel with the NEXT year's value to smooth the trajectory
     return current.where(correctionMask, next);
   });
 };
 
-// Rule C: Correct short, multi-year blocks of Class 12 immediately preceding consolidated Mosaic (21)
+
+// Rule B: Function to correct short (1 or 2 years) blocks of Class 12 
+// appearing right before a consolidated Class 21 (Mosaic) period.
 var applyShort12Before21Rule = function(image) {
-  // Execute logic across all years to build the corrected stack
+
   return buildAnnualStack(years, function(year) {
-    // Select the current year band
+
     var current = selectYear(image, year);
-    // Initialize the corrected image state as the current state
     var corrected = current;
 
-    // Correct single-year 12 block in Native -> 12 -> 21 -> 21 sequences
+    // Pattern 1: Correct 1-year block (Native -> 12 -> 21 -> 21)
     if (year >= startYear + 1 && year <= endYear - 2) {
-      // Isolate adjacent temporal bands
       var previousOneYear = selectYear(image, year - 1);
       var nextOneYear1 = selectYear(image, year + 1);
       var nextOneYear2 = selectYear(image, year + 2);
 
-      // Define boolean mask for Native-12-21-21
-      var oneYearBlock = current.eq(grasslandClass).and(getClassMask(previousOneYear, forestSavannaClasses)).and(nextOneYear1.eq(mosaicClass)).and(nextOneYear2.eq(mosaicClass));
-      // Overwrite current 12 with 21
+      var oneYearBlock = current.eq(grasslandClass)
+        .and(getClassMask(previousOneYear, forestSavannaClasses))
+        .and(nextOneYear1.eq(mosaicClass))
+        .and(nextOneYear2.eq(mosaicClass));
+
       corrected = corrected.where(oneYearBlock, mosaicClass);
     }
 
-    // Correct the first year of a two-year 12 block: Native -> 12 -> 12 -> 21 -> 21
+    // Pattern 2: Correct the FIRST year of a 2-year block (Native -> [12] -> 12 -> 21 -> 21)
     if (year >= startYear + 1 && year <= endYear - 3) {
-      // Isolate adjacent temporal bands
       var previousFirstYear = selectYear(image, year - 1);
       var nextFirstYear1 = selectYear(image, year + 1);
       var nextFirstYear2 = selectYear(image, year + 2);
       var nextFirstYear3 = selectYear(image, year + 3);
 
-      // Define boolean mask for the first 12 in the block
-      var firstYearOfBlock = current.eq(grasslandClass).and(getClassMask(previousFirstYear, forestSavannaClasses)).and(nextFirstYear1.eq(grasslandClass)).and(nextFirstYear2.eq(mosaicClass)).and(nextFirstYear3.eq(mosaicClass));
-      // Overwrite current 12 with 21
+      var firstYearOfBlock = current.eq(grasslandClass)
+        .and(getClassMask(previousFirstYear, forestSavannaClasses))
+        .and(nextFirstYear1.eq(grasslandClass))
+        .and(nextFirstYear2.eq(mosaicClass))
+        .and(nextFirstYear3.eq(mosaicClass));
+
       corrected = corrected.where(firstYearOfBlock, mosaicClass);
     }
 
-    // Correct the second year of a two-year 12 block: Native -> 12 -> 12 -> 21 -> 21
+    // Pattern 3: Correct the SECOND year of a 2-year block (Native -> 12 -> [12] -> 21 -> 21)
     if (year >= startYear + 2 && year <= endYear - 2) {
-      // Isolate adjacent temporal bands
       var previousSecondYear2 = selectYear(image, year - 2);
       var previousSecondYear1 = selectYear(image, year - 1);
       var nextSecondYear1 = selectYear(image, year + 1);
       var nextSecondYear2 = selectYear(image, year + 2);
 
-      // Define boolean mask for the second 12 in the block
-      var secondYearOfBlock = current.eq(grasslandClass).and(previousSecondYear1.eq(grasslandClass)).and(getClassMask(previousSecondYear2, forestSavannaClasses)).and(nextSecondYear1.eq(mosaicClass)).and(nextSecondYear2.eq(mosaicClass));
-      // Overwrite current 12 with 21
+      var secondYearOfBlock = current.eq(grasslandClass)
+        .and(previousSecondYear1.eq(grasslandClass))
+        .and(getClassMask(previousSecondYear2, forestSavannaClasses))
+        .and(nextSecondYear1.eq(mosaicClass))
+        .and(nextSecondYear2.eq(mosaicClass));
+
       corrected = corrected.where(secondYearOfBlock, mosaicClass);
     }
-    // Return the processed band
+
     return corrected;
   });
 };
 
-// Rule D: Correct spurious Class 12 tails occurring at the end of the time series after consolidated Mosaic (21)
+// Rule C: Function to correct end-of-series instability.
+// Often, agricultural areas falsely classify as Class 12 in the very last years.
 var applyEndSeries12Rule = function(image) {
-  // Define indices for the last four years of the series
+
+  // Define the last 4 years of the series dynamically
   var yearA = endYear - 3;
   var yearB = endYear - 2;
   var yearC = endYear - 1;
   var yearD = endYear;
 
-  // Extract the actual image bands for these trailing years
   var imageA = selectYear(image, yearA);
   var imageB = selectYear(image, yearB);
   var imageC = selectYear(image, yearC);
   var imageD = selectYear(image, yearD);
 
-  // Define mask for a two-year 12 tail: 21 -> 21 -> 12 -> 12
-  var twoYearTail = imageA.eq(mosaicClass).and(imageB.eq(mosaicClass)).and(imageC.eq(grasslandClass)).and(imageD.eq(grasslandClass));
-  // Define mask for a one-year 12 tail: 21 -> 21 -> 21 -> 12
-  var oneYearTail = imageA.eq(mosaicClass).and(imageB.eq(mosaicClass)).and(imageC.eq(mosaicClass)).and(imageD.eq(grasslandClass));
+  // Pattern 1: Correct a 2-year tail (21 -> 21 -> [12] -> [12]) at series end
+  var twoYearTail = imageA.eq(mosaicClass)
+    .and(imageB.eq(mosaicClass))
+    .and(imageC.eq(grasslandClass))
+    .and(imageD.eq(grasslandClass));
 
-  // Execute logic across all years to build the corrected stack
+  // Pattern 2: Correct a 1-year tail (21 -> 21 -> 21 -> [12]) at series end
+  var oneYearTail = imageA.eq(mosaicClass)
+    .and(imageB.eq(mosaicClass))
+    .and(imageC.eq(mosaicClass))
+    .and(imageD.eq(grasslandClass));
+
   return buildAnnualStack(years, function(year) {
-    // Select current year band
+
     var current = selectYear(image, year);
 
-    // If processing the penultimate year, correct it if it matches the two-year tail pattern
-    if (year === yearC) { return current.where(twoYearTail, mosaicClass); }
-    // If processing the final year, correct it if it matches either tail pattern
-    if (year === yearD) { return current.where(twoYearTail.or(oneYearTail), mosaicClass); }
+    // Apply correction for the penultimate year (only affected by 2-year tail)
+    if (year === yearC) {
+      return current.where(twoYearTail, mosaicClass);
+    }
 
-    // Return the band unmodified if it is not one of the tail years
+    // Apply correction for the final year (affected by both 1-year and 2-year tails)
+    if (year === yearD) {
+      return current.where(twoYearTail.or(oneYearTail), mosaicClass);
+    }
+
     return current;
   });
 };
 
-// Function to find the nearest previous class that is NOT Non-Vegetated (Class 25)
+// Rule D: Temporal memory scanning for Class 25 correction
+// Function to scan backwards to find the closest valid LULC class (ignoring 25)
 var getPreviousNon25Class = function(image, year) {
-  // Initialize the placeholder image for the previous class
-  var previousClass = ee.Image(0).rename('previous_non_25').toInt16();
-  // Iterate forward from the start year up to the current year
+
+  var previousClass = ee.Image(0)
+    .rename('previous_non_25')
+    .toInt16();
+
   for (var y = startYear; y < year; y++) {
-    // Select candidate year
     var candidate = selectYear(image, y);
-    // Continually overwrite the previous class unless it is 25, ultimately leaving the closest non-25 class
-    previousClass = previousClass.where(candidate.neq(nonVegetatedClass), candidate).rename('previous_non_25').toInt16();
+
+    // Iteratively update with candidate pixel UNLESS candidate is 25
+    previousClass = previousClass
+      .where(candidate.neq(nonVegetatedClass), candidate)
+      .rename('previous_non_25')
+      .toInt16();
   }
+
   return previousClass;
 };
 
-// Function to find the nearest subsequent class that is NOT Non-Vegetated (Class 25)
+// Function to scan forwards to find the closest valid LULC class (ignoring 25)
 var getNextNon25Class = function(image, year) {
-  // Initialize the placeholder image for the next class
-  var nextClass = ee.Image(0).rename('next_non_25').toInt16();
-  // Iterate backward from the end year down to the current year
+
+  var nextClass = ee.Image(0)
+    .rename('next_non_25')
+    .toInt16();
+
   for (var y = endYear; y > year; y--) {
-    // Select candidate year
     var candidate = selectYear(image, y);
-    // Continually overwrite the next class unless it is 25, ultimately leaving the closest non-25 class
-    nextClass = nextClass.where(candidate.neq(nonVegetatedClass), candidate).rename('next_non_25').toInt16();
+
+    // Iteratively update backwards with candidate pixel UNLESS candidate is 25
+    nextClass = nextClass
+      .where(candidate.neq(nonVegetatedClass), candidate)
+      .rename('next_non_25')
+      .toInt16();
   }
+
   return nextClass;
 };
 
-// Rule E: Correct anomalous blocks of Non-Vegetated (Class 25) flanked by native vegetation
+// RULE E: Function to correct Class 25 (Non-Vegetated) classification errors
+// where bare soil/rocks are mapped temporarily inside stable native vegetation.
 var apply25BetweenNativeRule = function(image) {
-  // Execute logic across all years to build the corrected stack
-  return buildAnnualStack(years, function(year) {
-    // Select the current year band
-    var current = selectYear(image, year);
-    // Skip processing for edge years
-    if (year === startYear || year === endYear) { return current; }
 
-    // Retrieve the closest prior non-25 class
+  return buildAnnualStack(years, function(year) {
+
+    var current = selectYear(image, year);
+
+    if (year === startYear || year === endYear) {
+      return current; // Skip edge years
+    }
+
+    // Scan backwards to find what class existed before the Class 25 interruption
     var previousNon25 = getPreviousNon25Class(image, year);
-    // Retrieve the closest subsequent non-25 class
+
+    // Scan forwards to find what class exists after the Class 25 interruption
     var nextNon25 = getNextNon25Class(image, year);
 
-    // Identify Class 25 pixels where both the previous and next stable states belong to native vegetation
-    var class25BetweenNative = current.eq(nonVegetatedClass).and(getClassMask(previousNon25, nativeClassesFor25Rule)).and(getClassMask(nextNon25, nativeClassesFor25Rule));
+    // Mask pixels where current is 25, AND both previous and next valid states are Native
+    var class25BetweenNative = current
+      .eq(nonVegetatedClass)
+      .and(getClassMask(previousNon25, nativeClassesFor25Rule))
+      .and(getClassMask(nextNon25, nativeClassesFor25Rule));
 
-    // Overwrite the anomalous 25 with the subsequent native class
+    // Replace the spurious Class 25 with the NEXT valid native class
     return current.where(class25BetweenNative, nextNon25);
   });
 };
 
-// Initialize the processing pipeline with the input classification stack
+// Initialize the output variable
 var outputClassification = classification;
 
-// Execute Rule A: Correct 4 -> 12 -> 21 -> 4
+// Apply rule A
 var beforeA = outputClassification;
-outputClassification = applySavanna12MosaicBetweenSavannaRule(outputClassification);
-Map.addLayer(outputClassification, vis, 'Post Rule A', false);
-Map.addLayer(changed(beforeA, outputClassification), changeVis, 'Changed by Post A', false);
-
-// Execute Rule B: Correct single-year Class 12 anomalies
-var beforeB = outputClassification;
 outputClassification = applyOneYearTrajectoryRule(outputClassification);
-Map.addLayer(outputClassification, vis, 'Post Rule B', false);
-Map.addLayer(changed(beforeB, outputClassification), changeVis, 'Changed by Post B', false);
+Map.addLayer(outputClassification, vis, 'Post Rule A', false);
 
-// Execute Rule C: Correct short blocks of Class 12 before Mosaic
-var beforeC = outputClassification;
+// Apply rule B
+var beforeB = outputClassification;
 outputClassification = applyShort12Before21Rule(outputClassification);
-Map.addLayer(outputClassification, vis, 'Post Rule C', false);
-Map.addLayer(changed(beforeC, outputClassification), changeVis, 'Changed by Post C', false);
+Map.addLayer(outputClassification, vis, 'Post Rule B', false);
 
-// Execute Rule D: Correct end-series Class 12 tails
-var beforeD = outputClassification;
+// Apply rule C
+var beforeC = outputClassification;
 outputClassification = applyEndSeries12Rule(outputClassification);
-Map.addLayer(outputClassification, vis, 'Post Rule D', false);
-Map.addLayer(changed(beforeD, outputClassification), changeVis, 'Changed by Post D', false);
+Map.addLayer(outputClassification, vis, 'Post Rule C', false);
 
-// Execute Rule E: Correct anomalous Class 25 bounded by native vegetation
-var beforeE = outputClassification;
+// Apply rule D
+var beforeD = outputClassification;
 outputClassification = apply25BetweenNativeRule(outputClassification);
-Map.addLayer(outputClassification, vis, 'Post Rule E', false);
-Map.addLayer(changed(beforeE, outputClassification), changeVis, 'Changed by Post E', false);
+Map.addLayer(outputClassification, vis, 'Post Rule D', false);
 
 // Ensure proper band naming
 outputClassification = outputClassification
@@ -343,9 +343,9 @@ outputClassification = outputClassification
     'filter': '11_trajectories',
     'input_asset': inputFile,
     'input_version': inputVersion,
-    'output_version': outputVersion
+    'output_version': outputVersion,
   });
-  
+
 // Render the fully corrected final output to the map
 Map.addLayer(outputClassification, vis, 'Output classification');
 print('Output classification', outputClassification);
@@ -357,6 +357,6 @@ Export.image.toAsset({
   assetId: out + inputFile + '_traj_v' + outputVersion,
   pyramidingPolicy: {'.default': 'mode'},
   region: classificationInput.geometry(),
-  scale: 10,
+  scale: 30,
   maxPixels: 1e13
 });
