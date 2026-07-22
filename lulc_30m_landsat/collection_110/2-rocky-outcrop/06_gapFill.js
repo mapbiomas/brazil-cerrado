@@ -11,43 +11,41 @@ var vis = {
   palette: [
     '#1f8d49','#d6bc74','#519799','#ffefc3','#d4271e','#2532e4',
     '#000000','#000000','#000000','#000000','#000000','#000000',
-    '#000000','#723d46','#000000','#000000','#000000','#000000',
+    '#000000','#000000','#000000','#000000','#000000','#000000',
     '#000000','#000000','#000000','#000000','#000000','#000000',
     '#000000','#000000','#000000','#000000','#000000','#ffaa5f'
   ],
 };
 
 // Define the input version 
-var inputVersion = '1';
+var inputVersion = '3';
 
 // Define the output version 
-var outputVersion = '1';
+var outputVersion = '3';
 
 // Define the root output directory path for the post-classification assets
-var out = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/SENTINEL/C04-ROCKY-POST-CLASSIFICATION/';
+var out = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/LANDSAT/C11-ROCKY-POST-CLASSIFICATION/';
 
 // Define the base filename for the exported gap-filled asset
-var filename = 'CERRADO_C04_rocky_gapfill_v';
+var filename = 'CERRADO_C11_rocky_gapfill_v';
 
 // Define the specific geographical bounding polygon covering the Rocky Outcrop extent
-var geometry = ee.Geometry.Polygon([[
-  [-43.31147706711961, -3.808835721093122], [-48.66181886399461, -6.385663504252142],
-  [-49.298668307044785, -8.51501096897931], [-49.07929933274461, -10.53581918353168],
-  [-50.639357926494604, -13.9068142507549], [-58.505568863994604, -14.5032340804768],
-  [-58.32978761399461, -22.29361304910609], [-55.60517823899462, -22.37491034285652],
-  [-53.012404801494604, -18.4633983511229], [-49.18916261399461, -17.92066736932658],
-  [-51.07615618299322, -24.41630980864504], [-50.90302980149462, -26.06116808540472],
-  [-42.46552980149461, -19.99858562581204], [-39.90949278503931, -16.19439805652448],
-  [-41.586623551494604, -13.8214841868409], [-41.89424073899462, -12.66654018907277],
-  [-42.904982926494604, -8.99842185369889], [-43.01648502470223, -8.357590785527185],
-  [-42.70947037851284, -8.102388953783956], [-40.83955323899461, -7.563385598862326],
-  [-40.09248292649461, -5.336504449649559], [-40.00459230149461, -2.487010249675636],
-  [-41.19897078173509, -2.429764821575260], [-42.43806398118211, -2.810760200204854],
-  [-42.72920167649461, -3.556672175749491], [-43.31147706711961, -3.808835721093122]
-]]);
+var geometry = ee.Geometry.Polygon (
+      [[-42.27876222336961,-3.611496375227711], [-48.66181886399461,-6.3856635042521420],
+      [-48.815269869544785,-8.471547597267095], [-49.40888917649461,-10.471005736523987],
+      [-51.82588136399461,-12.323304945945823], [-58.505568863994604,-14.50323408047685],
+      [-58.32978761399461,-22.293613049106090], [-55.60517823899462,-22.374910342856520],
+      [-53.012404801494604,-18.46339835112294], [-49.40888917649461,-18.296584445485763],
+      [-51.07615618299322,-24.416309808645040], [-50.90302980149462,-26.061168085404727],
+      [-42.46552980149461,-19.998585625812040], [-40.34894591003931,-16.910503793082220],
+      [-41.586623551494604,-13.82148418684091], [-41.89424073899462,-12.666540189072775],
+      [-42.904982926494604,-8.998421853698890], [-43.01648502470223,-8.3575907855271850],
+      [-42.70947037851284,-8.1023889537839560], [-40.83955323899461,-7.5633855988623260],
+      [-40.09248292649461,-5.3365044496495590], [-40.88349855149462,-3.1015101677947023],
+      [-42.04255616868211,-3.3373432698164387], [-42.27876222336961,-3.6114963752277110]]);
 
 // Load the image collection containing the raw rocky outcrop probabilities and classifications
-var data = ee.ImageCollection('projects/mapbiomas-workspace/COLECAO_DEV/COLECAO10_DEV/CERRADO/SENTINEL/C04_ROCKY-MAP-PROBABILITY');
+var data = ee.ImageCollection('projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/LANDSAT/C11-ROCKY-GENERAL-MAP-PROBABILITY');
 
 // Define a function to build a single multi-band image from the annual classification collection
 var buildCollection = function(input, version, startYear, endYear) {
@@ -84,10 +82,10 @@ var classificationInput = collection.mask(collection.neq(0));
 
 // Print the assembled multi-band input image to the console
 print('Input classification', classificationInput);
-Map.addLayer(classificationInput.select(['classification_2023']), vis, 'input');
+Map.addLayer(classificationInput.select(['classification_1988']), vis, 'input');
 
 // Generate a sequence of years to define the temporal range for the gap-fill filter
-var years = ee.List.sequence({'start': 2017, 'end': 2024, step: 1}).getInfo();
+var years = ee.List.sequence({'start': 1985, 'end': 2025, step: 1}).getInfo();
 
 // Define the core function to apply the temporal gap-fill algorithm
 var applyGapFill = function (image) {
@@ -173,7 +171,7 @@ var imageFilledYear = applyGapFill(imagePixelYear);
 print('Output classification', imageFilledtnt0);
 
 // Add the gap-filled 2023 classification to the map to verify the correction
-Map.addLayer(imageFilledtnt0.select('classification_2023'), vis, 'filtered');
+Map.addLayer(imageFilledtnt0.select('classification_1988'), vis, 'filtered');
 
 // Embed the output version metadata attribute directly into the output asset properties
 imageFilledtnt0 = imageFilledtnt0.set('version', outputVersion);
@@ -185,6 +183,6 @@ Export.image.toAsset({
     'assetId': out + filename + outputVersion,
     'pyramidingPolicy': { '.default': 'mode' },
     'region': geometry,
-    'scale': 10,
+    'scale': 30,
     'maxPixels': 1e13,
 });
