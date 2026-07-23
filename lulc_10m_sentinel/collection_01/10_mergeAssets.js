@@ -48,12 +48,12 @@ ee.List.sequence({'start': 2016, 'end': 2022}).getInfo()
                 .unmask(0)
                 .focal_mode({'radius': 1, 'kernelType': 'square', 'units': 'pixels'});
  
-        // compute te number of connections
+        // compute the number of connections
         var connections = recipe.select(['classification_' + year_i])
                 .unmask(0)
                 .connectedPixelCount({'maxSize': 100, 'eightConnected': false});
         
-        // get the focal model when the number of connections of same class is lower than parameter
+        // get the focal model when the number of connections of the same class is lower than the parameter
         var to_mask = focal_mode.updateMask(connections.lte(50));
 
         // apply filter
