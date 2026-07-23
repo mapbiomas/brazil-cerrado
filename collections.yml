@@ -28,7 +28,6 @@ repository:
     - "land use"
     - "land cover"
     - "lulc"
-    - "land-use change"
     - "remote sensing"
     - "earth observation"
     - "geospatial"
@@ -37,13 +36,8 @@ repository:
     - "sentinel-2"
     - "machine learning"
     - "random forest"
-    - "annual mapping"
     - "environmental monitoring"
     - "native vegetation"
-    - "deforestation"
-    - "agriculture"
-    - "pasture"
-    - "rocky outcrop"
 
 current_products:
   - id: "cerrado_landsat_collection_11"
@@ -74,28 +68,9 @@ current_products:
       - "multi-temporal satellite image analysis"
       - "training-mask generation"
       - "stratified sampling"
-      - "spectral and environmental feature engineering"
       - "Random Forest classification"
-      - "gap filling"
-      - "temporal filtering"
-      - "spatial filtering"
-      - "frequency filtering"
-      - "thematic integration"
-      - "accuracy assessment"
-    upstream_product_collections:
-      - product_collection: "8.0"
-        purpose: "Reference or auxiliary input in specific processing steps"
-      - product_collection: "9.0"
-        purpose: "Reference or auxiliary input in specific processing steps"
-      - product_collection: "10.1"
-        purpose: "Previous-product reference, stability analysis, or thematic input"
-    notes:
-      - >
-        References to previous MapBiomas collections may represent intentional
-        methodological dependencies rather than version inconsistencies.
-      - >
-        Collection-specific asset versions and intermediate processing
-        revisions should be documented inside the collection folder.
+      - "post-classification filling"
+
 
   - id: "cerrado_sentinel_collection_4"
     name: "MapBiomas Cerrado Sentinel-2 Collection 4"
@@ -121,28 +96,11 @@ current_products:
         - "R"
     principal_methods:
       - "multi-temporal satellite image analysis"
-      - "high-resolution land-cover mapping"
-      - "training-sample generation"
-      - "machine-learning classification"
+      - "training-mask generation"
+      - "stratified sampling"
       - "Random Forest classification"
-      - "gap filling"
-      - "temporal filtering"
-      - "spatial filtering"
-      - "thematic integration"
-      - "accuracy assessment"
-    upstream_product_collections:
-      - product_collection: "Sentinel-2 Collection 3"
-        purpose: "Previous high-resolution product reference where applicable"
-      - product_collection: "Landsat reference products"
-        purpose: "Auxiliary reference or thematic support where applicable"
-    notes:
-      - >
-        Sentinel-2 collection numbering is independent from Landsat collection
-        numbering.
-      - >
-        The production workspace cycle may differ from the Sentinel-2 product
-        collection number.
-
+      - "post-classification filling"
+      
 historical_products:
   landsat:
     root_folder: "lulc_30m_landsat"
@@ -188,15 +146,15 @@ documentation:
     url: "https://brasil.mapbiomas.org/en/atbd-entenda-cada-etapa/"
   terms_of_use:
     name: "MapBiomas Terms of Use"
-    url: "https://brasil.mapbiomas.org/termos-de-uso/"
+    url: "https://brasil.mapbiomas.org/en/termos-de-uso/"
   data_platform:
     name: "MapBiomas Brazil"
     url: "https://brasil.mapbiomas.org/"
 
 contacts:
-  - name: "Bárbara Silva"
+  - name: "Bárbara Costa"
     email: "barbara.silva@ipam.org.br"
-  - name: "Dhemerson Costa"
+  - name: "Dhemerson Conciani"
     email: "dhemerson.costa@ipam.org.br"
   - name: "MapBiomas"
     email: "contato@mapbiomas.org"
