@@ -13,7 +13,7 @@ var version_out = 13;
 // read image
 var classification = ee.Image(root + file_in);
 
-// define minimum mapeable area
+// define minimum mappable area
 var filter_size = 120;
 
 // import mapbiomas color ramp
@@ -38,7 +38,7 @@ ee.List.sequence({'start': 2016, 'end': 2022}).getInfo()
                 .unmask(0)
                 .focal_mode({'radius': 1, 'kernelType': 'square', 'units': 'pixels'});
  
-        // compute te number of connections
+        // compute the number of connections
         var connections = classification.select(['classification_' + year_i])
                 .unmask(0)
                 .connectedPixelCount({'maxSize': 100, 'eightConnected': false});
@@ -70,12 +70,12 @@ ee.List.sequence({'start': 2016, 'end': 2022}).getInfo()
                 .unmask(0)
                 .focal_mode({'radius': 1, 'kernelType': 'square', 'units': 'pixels'});
  
-        // compute te number of connections
+        // compute the number of connections
         var connections = filtered.select(['classification_' + year_i])
                 .unmask(0)
                 .connectedPixelCount({'maxSize': 100, 'eightConnected': false});
         
-        // get the focal model when the number of connections of same class is lower than parameter
+        // get the focal model when the number of connections of the same class is lower than the parameter
         var to_mask = focal_mode.updateMask(connections.lte(filter_size));
 
         // apply filter
