@@ -23,7 +23,7 @@ var nativeAssetPath = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11
 var rockyAssetPath = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/SENTINEL/C04-ROCKY-POST-CLASSIFICATION/CERRADO_C04_rocky_gapfill_frequency_spatial_v1';
 
 // Define the base output directory path 
-var outDir = 'projects/mapbiomas-workspace/COLECAO_DEV/COLECAO10_DEV/CERRADO/SENTINEL/C03-POST-CLASSIFICATION/';
+var outDir = 'projects/ee-ipam/assets/MAPBIOMAS/LULC/CERRADO_DEV/COL_11/SENTINEL/C04-POST-CLASSIFICATION/';
 
 // Construct the exact filename for the export
 var exportFilename = 'CERRADO_C04_native_spt1_rocky_spt1_v' + outputVersion;
