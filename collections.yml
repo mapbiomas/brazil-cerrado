@@ -1,0 +1,202 @@
+schema_version: "1.0"
+
+repository:
+  name: "MapBiomas Brazil - Cerrado Biome"
+  slug: "mapbiomas/brazil-cerrado"
+  organization: "MapBiomas Brazil"
+  developer:
+    name: "Instituto de Pesquisa Ambiental da Amazônia"
+    acronym: "IPAM"
+    website: "https://ipam.org.br/"
+  repository_url: "https://github.com/mapbiomas/brazil-cerrado"
+  biome:
+    name: "Cerrado"
+    country: "Brazil"
+  description: >
+    Official source-code repository for annual land-use and land-cover
+    mapping of the Brazilian Cerrado biome using Landsat and Sentinel-2
+    Earth observation imagery.
+  primary_platform: "Google Earth Engine"
+  programming_languages:
+    - "JavaScript"
+    - "Python"
+    - "R"
+  keywords:
+    - "mapbiomas"
+    - "cerrado"
+    - "brazil"
+    - "land use"
+    - "land cover"
+    - "lulc"
+    - "land-use change"
+    - "remote sensing"
+    - "earth observation"
+    - "geospatial"
+    - "google earth engine"
+    - "landsat"
+    - "sentinel-2"
+    - "machine learning"
+    - "random forest"
+    - "annual mapping"
+    - "environmental monitoring"
+    - "native vegetation"
+    - "deforestation"
+    - "agriculture"
+    - "pasture"
+    - "rocky outcrop"
+
+current_products:
+  - id: "cerrado_landsat_collection_11"
+    name: "MapBiomas Cerrado Landsat Collection 11"
+    product_collection: "11.0"
+    sensor_family: "Landsat"
+    image_source:
+      program: "Landsat"
+      satellites:
+        - "Landsat 5"
+        - "Landsat 7"
+        - "Landsat 8"
+        - "Landsat 9"
+    spatial_resolution_m: 30
+    temporal_resolution: "annual"
+    start_year: 1985
+    end_year: 2025
+    status: "current"
+    folder: "lulc_30m_landsat/collection_110"
+    repository_url: >
+      https://github.com/mapbiomas/brazil-cerrado/tree/main/lulc_30m_landsat/collection_110
+    processing_environment:
+      primary: "Google Earth Engine"
+      complementary:
+        - "Python"
+        - "R"
+    principal_methods:
+      - "multi-temporal satellite image analysis"
+      - "training-mask generation"
+      - "stratified sampling"
+      - "spectral and environmental feature engineering"
+      - "Random Forest classification"
+      - "gap filling"
+      - "temporal filtering"
+      - "spatial filtering"
+      - "frequency filtering"
+      - "thematic integration"
+      - "accuracy assessment"
+    upstream_product_collections:
+      - product_collection: "8.0"
+        purpose: "Reference or auxiliary input in specific processing steps"
+      - product_collection: "9.0"
+        purpose: "Reference or auxiliary input in specific processing steps"
+      - product_collection: "10.1"
+        purpose: "Previous-product reference, stability analysis, or thematic input"
+    notes:
+      - >
+        References to previous MapBiomas collections may represent intentional
+        methodological dependencies rather than version inconsistencies.
+      - >
+        Collection-specific asset versions and intermediate processing
+        revisions should be documented inside the collection folder.
+
+  - id: "cerrado_sentinel_collection_4"
+    name: "MapBiomas Cerrado Sentinel-2 Collection 4"
+    product_collection: "4.0"
+    sensor_family: "Sentinel-2"
+    image_source:
+      program: "Copernicus Sentinel"
+      satellites:
+        - "Sentinel-2A"
+        - "Sentinel-2B"
+    spatial_resolution_m: 10
+    temporal_resolution: "annual"
+    start_year: 2017
+    end_year: 2025
+    status: "current"
+    folder: "lulc_10m_sentinel/collection_04"
+    repository_url: >
+      https://github.com/mapbiomas/brazil-cerrado/tree/main/lulc_10m_sentinel/collection_04
+    processing_environment:
+      primary: "Google Earth Engine"
+      complementary:
+        - "Python"
+        - "R"
+    principal_methods:
+      - "multi-temporal satellite image analysis"
+      - "high-resolution land-cover mapping"
+      - "training-sample generation"
+      - "machine-learning classification"
+      - "Random Forest classification"
+      - "gap filling"
+      - "temporal filtering"
+      - "spatial filtering"
+      - "thematic integration"
+      - "accuracy assessment"
+    upstream_product_collections:
+      - product_collection: "Sentinel-2 Collection 3"
+        purpose: "Previous high-resolution product reference where applicable"
+      - product_collection: "Landsat reference products"
+        purpose: "Auxiliary reference or thematic support where applicable"
+    notes:
+      - >
+        Sentinel-2 collection numbering is independent from Landsat collection
+        numbering.
+      - >
+        The production workspace cycle may differ from the Sentinel-2 product
+        collection number.
+
+historical_products:
+  landsat:
+    root_folder: "lulc_30m_landsat"
+    collections:
+      - product_collection: "5.0"
+        folder: "lulc_30m_landsat/collection_50"
+        status: "historical"
+      - product_collection: "6.0"
+        folder: "lulc_30m_landsat/collection_60"
+        status: "historical"
+      - product_collection: "7.0"
+        folder: "lulc_30m_landsat/collection_70"
+        status: "historical"
+      - product_collection: "7.1"
+        folder: "lulc_30m_landsat/collection_71"
+        status: "historical"
+      - product_collection: "8.0"
+        folder: "lulc_30m_landsat/collection_80"
+        status: "historical"
+      - product_collection: "9.0"
+        folder: "lulc_30m_landsat/collection_90"
+        status: "historical"
+      - product_collection: "10.0"
+        folder: "lulc_30m_landsat/collection_100"
+        status: "historical"
+
+  sentinel_2:
+    root_folder: "lulc_10m_sentinel"
+    collections:
+      - product_collection: "1.0"
+        folder: "lulc_10m_sentinel/collection_01"
+        status: "historical"
+      - product_collection: "2.0"
+        folder: "lulc_10m_sentinel/collection_02"
+        status: "historical"
+      - product_collection: "3.0"
+        folder: "lulc_10m_sentinel/collection_03"
+        status: "historical"
+
+documentation:
+  methodology:
+    name: "Algorithm Theoretical Basis Document - Cerrado Biome Appendix"
+    url: "https://brasil.mapbiomas.org/en/atbd-entenda-cada-etapa/"
+  terms_of_use:
+    name: "MapBiomas Terms of Use"
+    url: "https://brasil.mapbiomas.org/termos-de-uso/"
+  data_platform:
+    name: "MapBiomas Brazil"
+    url: "https://brasil.mapbiomas.org/"
+
+contacts:
+  - name: "Bárbara Silva"
+    email: "barbara.silva@ipam.org.br"
+  - name: "Dhemerson Costa"
+    email: "dhemerson.costa@ipam.org.br"
+  - name: "MapBiomas"
+    email: "contato@mapbiomas.org"
