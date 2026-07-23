@@ -1,5 +1,5 @@
 // Post-processing - Gapfill filling, uses raw classification as input
-// For clarification write to <dhemerson.costa@ipam.org.br>
+// For clarification, write to <dhemerson.costa@ipam.org.br>
 
 var geometry = 
     ee.Geometry.Polygon(
