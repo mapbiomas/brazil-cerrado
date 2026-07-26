@@ -83,7 +83,10 @@ for year in years:
 
     # Load HAND data (height above nearest drainage)
     hand = ee.ImageCollection("users/gena/global-hand/hand-100").mosaic().toInt16().clip(aoi_vec).rename('hand')
-    
+     
+    # Load TPI data (Topographic Position Index, Geomorpho 90m) 
+    tpi = ee.ImageCollection("projects/sat-io/open-datasets/Geomorpho90m/tpi").mosaic().multiply(10000).round().rename('tpi').toInt64(),
+     
     ## Mosaic Assembly
     # Set the best temporal window for the Cerrado biome
     dateStart = ee.Date.fromYMD(year, 4, 1)
@@ -121,7 +124,7 @@ for year in years:
     mosaic = getSpatialContext(mosaic)
     
     # Append the processed geographic coordinate bands to the mosaic
-    mosaic = mosaic.addBands(lat).addBands(lon_sin).addBands(lon_cos).addBands(hand)
+    mosaic = mosaic.addBands(lat).addBands(lon_sin).addBands(lon_cos).addBands(hand).addBands(tpi)
         
     # Store the assembled multi-band composite in the tracking dictionary
     mosaic_dict[year] = mosaic
