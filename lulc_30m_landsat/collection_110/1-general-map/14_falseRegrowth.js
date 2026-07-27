@@ -65,7 +65,7 @@ var max21Commission = 3; // Max length of false anthropic occurrence
 
 // Rule 4: Backward stabilization for long Grassland (12) trajectories
 var grasslandReferenceEndYear = 2024; // Anchor year to confirm Grassland persistence
-var min12YearsLongTrajectory = 12; // Minimum years required to lock the pixel as stable Grassland
+var minYearsLongTrajectory = 13; // Minimum years required to lock the pixel as stable Grassland
 
 // Rule 5: Suppress short native regeneration periods within consolidated agriculture
 var min21BlockForRegeneration = 4; // Required years of stable agriculture before AND after the gap
@@ -317,7 +317,7 @@ var applyLongGrassland12Stabilization = function(img) {
   var endsAs12 = sel(img, grasslandReferenceEndYear).eq(12);
 
   var stable12 = startsAs21or25
-    .and(n12.gte(min12YearsLongTrajectory))
+    .and(n12.gte(minYearsLongTrajectory))
     .and(endsAs12);
 
   return make(years, function(year) {
