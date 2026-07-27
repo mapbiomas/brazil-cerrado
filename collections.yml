@@ -81,6 +81,7 @@ current_products:
       satellites:
         - "Sentinel-2A"
         - "Sentinel-2B"
+        - "Google Satellite Embedding"
     spatial_resolution_m: 10
     temporal_resolution: "annual"
     start_year: 2017
